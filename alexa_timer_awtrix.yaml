@@ -1,5 +1,5 @@
 blueprint:
-  name: Alexa Timer → AWTRIX 3 (v1.2)
+  name: Alexa Timer → AWTRIX 3 (v1.3)
   description: >
     Zeigt den nächsten Alexa-Timer als Live-Countdown auf einem AWTRIX-3-Display
     (Ulanzi / awtrix-light) an und löst beim Ablauf einen Alarm aus.
@@ -24,16 +24,20 @@ blueprint:
       • Quelle ist der "next timer"-Sensor von Alexa Media Player (HACS),
         z. B. sensor.alexa_wohnzimmer_next_timer (ISO-Zeitstempel im State).
 
-    Hinweis: Der Ablauf-Alarm wird nur ausgelöst, wenn der Timer wirklich
-    abgelaufen ist (der vorherige Zeitstempel ist erreicht) — nicht beim
-    Stellen, Abbrechen oder kurzem "Flackern" des Alexa-Sensors. Optional kann
-    zusätzlich beim rechnerischen Erreichen von 0 ausgelöst werden (Erweitert).
+    Hinweis: Der Ablauf-Alarm wird über die ZEIT erkannt — er feuert nur, wenn
+    der Timer-Zielzeitpunkt gerade eben (innerhalb ~1,5 s) erreicht wurde. Das
+    Stellen, Abbrechen oder kurzes "Flackern" des Alexa-Sensors (auch wenn er
+    dabei kurz auf einem alten/abgelaufenen Zeitstempel hängt) löst keinen
+    Alarm mehr aus.
 
     Changelog:
-      v1.2 - Fehlalarm-Fix: Alarm feuert nur noch bei echtem Ablauf (Prüfung
-             des vorherigen Zeitstempels via trigger.from_state), nicht mehr bei
-             Sensor-Flackern/Timer-Stellen. Neuer Aufräum-Zweig für
-             abgebrochene/entfernte Timer (löscht Anzeige ohne Alarm).
+      v1.3 - Fehlalarm-Fix v2: Ablauf wird jetzt zeitbasiert erkannt (Ziel
+             innerhalb der letzten ~1,5 s erreicht) statt über den wackeligen
+             Sensor-Statuswechsel. Behebt "sofort LOS beim Timer-Stellen", das
+             durch Polling-Verzögerung des Alexa-Sensors entstand. Option
+             "Alarm bei rechnerischer 0" entfernt (nicht mehr nötig).
+      v1.2 - Fehlalarm-Fix (unvollständig): Prüfung des vorherigen Zeitstempels
+             via trigger.from_state. Half nicht gegen die Polling-Verzögerung.
       v1.1 - Anzeige-Modus "Nur Timer anpinnen" (gehaltene Notification);
              Farbauswahl per Farbrad (color_rgb); Alarm-Effekt als Dropdown
              (gültige AWTRIX-Effektnamen); Blinken des Alarm-Textes optional.
@@ -200,19 +204,6 @@ blueprint:
             - label: "ColorWaves"
               value: "ColorWaves"
 
-    # ─── ⚙️ ERWEITERT ─────────────────────────────────────────────
-    alarm_on_zero:
-      name: Alarm auch bei rechnerischer 0 auslösen
-      description: >
-        Zusätzlich auslösen, sobald der berechnete Countdown 0 erreicht — auch
-        wenn der Quell-Sensor noch nicht gewechselt hat. Nur aktivieren, falls
-        dein Alexa-Sensor beim Klingeln NICHT zuverlässig auf unavailable wechselt.
-        Kann zu mehrfachem Alarm führen, falls der Sensor länger auf einem
-        vergangenen Zeitstempel stehen bleibt.
-      default: false
-      selector:
-        boolean: {}
-
 mode: restart
 max_exceeded: silent
 
@@ -229,43 +220,51 @@ variables:
   alarm_blink: !input alarm_blink
   alarm_duration: !input alarm_duration
   alarm_effect: !input alarm_effect
-  alarm_on_zero: !input alarm_on_zero
   topic_custom: "{{ awtrix_prefix }}/custom/{{ app_name }}"
   topic_notify: "{{ awtrix_prefix }}/notify"
   topic_dismiss: "{{ awtrix_prefix }}/notify/dismiss"
-  # Verbleibende Sekunden als String: Zahl, "0" oder "none" (kein Timer)
-  remaining: >
+  # Sekunden bis zum Timer-Ziel als String: Zahl (auch negativ) oder "none".
+  # Negativ = Ziel liegt in der Vergangenheit; "none" = kein Timer gesetzt.
+  secs_left: >
     {% set nt = states(source_timer) %}
     {% if nt not in ['unknown', 'unavailable', '', 'Kein Timer gestellt'] %}
       {% set target = as_datetime(nt) %}
-      {% if target and target > now() %}
-        {{ (target - now()).total_seconds() | int }}
+      {% if target is not none %}
+        {{ (target - now()).total_seconds() | round(1) }}
       {% else %}
-        0
+        none
       {% endif %}
     {% else %}
       none
     {% endif %}
-  # Formatierter Countdown-Text (MM:SS oder H:MM:SS)
-  countdown_text: >
-    {% set s = remaining | int(0) %}
-    {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
-    {% if always_show_hours or h > 0 %}{{ '%d:%02d:%02d' | format(h, m, sec) }}{% else %}{{ '%02d:%02d' | format(m, sec) }}{% endif %}
-  # True NUR wenn der Timer wirklich abgelaufen ist: der vorherige Sensorwert
-  # war ein Zeitstempel, dessen Zeit jetzt erreicht ist. Verhindert Fehlalarme
-  # bei Sensor-Flackern (unavailable) oder beim Timer-Stellen/Abbrechen.
-  timer_expired: >
+  # Timer läuft (Ziel noch in der Zukunft)?
+  counting: "{{ secs_left != 'none' and (secs_left | float(-99999)) > 0 }}"
+  # Timer GERADE EBEN abgelaufen? Nur wahr, wenn das Ziel innerhalb der letzten
+  # ~1,5 s erreicht wurde — ein alter/abgelaufener Zeitstempel (Sensor-Flackern
+  # beim Stellen) zählt NICHT. Das ist der Kern des Fehlalarm-Fixes.
+  just_expired: >
+    {{ secs_left != 'none'
+       and (secs_left | float(99999)) <= 0
+       and (secs_left | float(99999)) > -1.5 }}
+  # Timer wurde abgebrochen: ein noch laufender (zukünftiger) Timer ist
+  # verschwunden. Nur dann Anzeige löschen — ohne Alarm.
+  timer_cancelled: >
     {% set ok = false %}
-    {% if trigger.id == 'source' and trigger.from_state is not none and remaining | int(-1) <= 0 %}
+    {% if trigger.id == 'source' and trigger.from_state is not none and not (counting | bool) %}
       {% set frm = trigger.from_state.state %}
       {% if frm not in ['unknown', 'unavailable', '', 'Kein Timer gestellt'] %}
-        {% set frm_dt = as_datetime(frm) %}
-        {% if frm_dt is not none and (now() - frm_dt).total_seconds() >= -2 %}
+        {% set fdt = as_datetime(frm) %}
+        {% if fdt is not none and (fdt - now()).total_seconds() > 1 %}
           {% set ok = true %}
         {% endif %}
       {% endif %}
     {% endif %}
     {{ ok }}
+  # Formatierter Countdown-Text (MM:SS oder H:MM:SS)
+  countdown_text: >
+    {% set s = [secs_left | float(0), 0] | max | int %}
+    {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
+    {% if always_show_hours or h > 0 %}{{ '%d:%02d:%02d' | format(h, m, sec) }}{% else %}{{ '%02d:%02d' | format(m, sec) }}{% endif %}
 
 triggers:
   - trigger: time_pattern
@@ -279,23 +278,13 @@ conditions: []
 
 actions:
   - choose:
-      # ── Timer wirklich abgelaufen: Alarm + Anzeige aufräumen ────
+      # ── Timer GERADE EBEN abgelaufen: Alarm + Anzeige aufräumen ──
       - conditions:
           - condition: template
-            value_template: >-
-              {{ (timer_expired | bool)
-                 or (alarm_on_zero and remaining | int(-1) == 0) }}
+            value_template: "{{ just_expired | bool }}"
         sequence:
-          # Angepinnten Countdown vorher entfernen
-          - if:
-              - condition: template
-                value_template: "{{ display_mode == 'pinned' }}"
-            then:
-              - action: mqtt.publish
-                data:
-                  topic: "{{ topic_dismiss }}"
-                  payload: ""
-          # Alarm anzeigen
+          # Alarm anzeigen (ersetzt im Pinned-Modus automatisch den Countdown,
+          # da stack:false). Kein separates dismiss nötig.
           - action: mqtt.publish
             data:
               topic: "{{ topic_notify }}"
@@ -314,7 +303,7 @@ actions:
       # ── Timer läuft: Countdown anzeigen ─────────────────────────
       - conditions:
           - condition: template
-            value_template: "{{ remaining | int(-1) > 0 }}"
+            value_template: "{{ counting | bool }}"
         sequence:
           - if:
               - condition: template
@@ -334,10 +323,10 @@ actions:
                   payload: >-
                     {"text":"{{ countdown_text }}","color":{{ countdown_color | to_json }},"pushIcon":0,"duration":5{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
 
-      # ── Timer weg/abgebrochen (kein echtes Ablaufen): nur löschen ─
+      # ── Timer abgebrochen (zukünftiger Timer verschwunden): löschen ─
       - conditions:
           - condition: template
-            value_template: "{{ trigger.id == 'source' and remaining | int(-1) <= 0 }}"
+            value_template: "{{ timer_cancelled | bool }}"
         sequence:
           - if:
               - condition: template
