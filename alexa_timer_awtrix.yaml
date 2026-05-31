@@ -1,5 +1,5 @@
 blueprint:
-  name: Alexa Timer → AWTRIX 3 (v1.3)
+  name: Alexa Timer → AWTRIX 3 (v1.4)
   description: >
     Zeigt den nächsten Alexa-Timer als Live-Countdown auf einem AWTRIX-3-Display
     (Ulanzi / awtrix-light) an und löst beim Ablauf einen Alarm aus.
@@ -22,15 +22,21 @@ blueprint:
     Voraussetzungen:
       • MQTT-Integration aktiv und AWTRIX per MQTT verbunden.
       • Quelle ist der "next timer"-Sensor von Alexa Media Player (HACS),
-        z. B. sensor.alexa_wohnzimmer_next_timer (ISO-Zeitstempel im State).
+        z. B. sensor.alexa_wohnzimmer_next_timer. Es wird das Attribut "active"
+        ausgewertet (Liste mit triggerTime je Timer) — NICHT der State, da dieser
+        bei AMP unzuverlässig ist (abgelaufene Timer bleiben als Leichen hängen).
 
-    Hinweis: Der Ablauf-Alarm wird über die ZEIT erkannt — er feuert nur, wenn
-    der Timer-Zielzeitpunkt gerade eben (innerhalb ~1,5 s) erreicht wurde. Das
-    Stellen, Abbrechen oder kurzes "Flackern" des Alexa-Sensors (auch wenn er
-    dabei kurz auf einem alten/abgelaufenen Zeitstempel hängt) löst keinen
-    Alarm mehr aus.
+    Hinweis: Die nächste Timer-Zielzeit kommt aus dem Attribut active[].triggerTime
+    (absolute Unix-Zeit). Alte/abgelaufene Timer liegen in der Vergangenheit und
+    werden ignoriert. Der Alarm feuert nur, wenn die Zielzeit gerade eben
+    (innerhalb ~1,5 s) erreicht wurde — Stellen, Abbrechen oder "ON"-Leichen
+    lösen keinen Fehlalarm mehr aus.
 
     Changelog:
+      v1.4 - Quelle umgestellt: nutzt jetzt Attribut active[].triggerTime statt
+             des unzuverlässigen Sensor-State. Behebt "sofort LOS", das durch
+             abgelaufene 'ON'-Timer-Leichen mit vergangener Zeit entstand
+             (Alexa-Media-Player-Eigenheit). Rechnet in UTC-Epoch (zeitzonensicher).
       v1.3 - Fehlalarm-Fix v2: Ablauf wird jetzt zeitbasiert erkannt (Ziel
              innerhalb der letzten ~1,5 s erreicht) statt über den wackeligen
              Sensor-Statuswechsel. Behebt "sofort LOS beim Timer-Stellen", das
@@ -223,43 +229,41 @@ variables:
   topic_custom: "{{ awtrix_prefix }}/custom/{{ app_name }}"
   topic_notify: "{{ awtrix_prefix }}/notify"
   topic_dismiss: "{{ awtrix_prefix }}/notify/dismiss"
-  # Sekunden bis zum Timer-Ziel als String: Zahl (auch negativ) oder "none".
-  # Negativ = Ziel liegt in der Vergangenheit; "none" = kein Timer gesetzt.
+  # WICHTIG: Der STATE des Alexa-Sensors ist als Quelle unbrauchbar — abgelaufene
+  # Timer bleiben dort als "ON"-Leichen mit vergangener Zeit hängen (AMP-Bug).
+  # Wir lesen stattdessen die absolute Zielzeit (triggerTime, Unix-ms) aus dem
+  # Attribut "active", filtern echte zukünftige Timer und rechnen in UTC-Epoch
+  # (zeitzonensicher).
+  #
+  # Sekunden bis zum nächsten echten Timer: Zahl (auch leicht negativ direkt
+  # nach Ablauf) oder "none" (kein Timer). 1,5 s Karenz, damit der Moment des
+  # Ablaufs (secs_left <= 0) sicher erfasst wird; alte Leichen liegen weiter in
+  # der Vergangenheit und fallen heraus.
   secs_left: >
-    {% set nt = states(source_timer) %}
-    {% if nt not in ['unknown', 'unavailable', '', 'Kein Timer gestellt'] %}
-      {% set target = as_datetime(nt) %}
-      {% if target is not none %}
-        {{ (target - now()).total_seconds() | round(1) }}
-      {% else %}
-        none
-      {% endif %}
+    {% set items = state_attr(source_timer, 'active') or [] %}
+    {% set now_ms = now().timestamp() * 1000 %}
+    {% set fut = items | selectattr('triggerTime', 'defined')
+                       | selectattr('triggerTime', 'gt', now_ms - 1500)
+                       | map(attribute='triggerTime') | list %}
+    {% if fut | length > 0 %}
+      {{ ((fut | min) / 1000 - now().timestamp()) | round(1) }}
     {% else %}
       none
     {% endif %}
   # Timer läuft (Ziel noch in der Zukunft)?
   counting: "{{ secs_left != 'none' and (secs_left | float(-99999)) > 0 }}"
-  # Timer GERADE EBEN abgelaufen? Nur wahr, wenn das Ziel innerhalb der letzten
-  # ~1,5 s erreicht wurde — ein alter/abgelaufener Zeitstempel (Sensor-Flackern
-  # beim Stellen) zählt NICHT. Das ist der Kern des Fehlalarm-Fixes.
-  just_expired: >
-    {{ secs_left != 'none'
-       and (secs_left | float(99999)) <= 0
-       and (secs_left | float(99999)) > -1.5 }}
-  # Timer wurde abgebrochen: ein noch laufender (zukünftiger) Timer ist
-  # verschwunden. Nur dann Anzeige löschen — ohne Alarm.
-  timer_cancelled: >
-    {% set ok = false %}
-    {% if trigger.id == 'source' and trigger.from_state is not none and not (counting | bool) %}
-      {% set frm = trigger.from_state.state %}
-      {% if frm not in ['unknown', 'unavailable', '', 'Kein Timer gestellt'] %}
-        {% set fdt = as_datetime(frm) %}
-        {% if fdt is not none and (fdt - now()).total_seconds() > 1 %}
-          {% set ok = true %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-    {{ ok }}
+  # Timer GERADE EBEN abgelaufen (Ziel innerhalb der letzten ~1,5 s erreicht)?
+  just_expired: "{{ secs_left != 'none' and (secs_left | float(99999)) <= 0 }}"
+  # Ist in den letzten alarm_duration Sekunden ein Timer abgelaufen? Schützt den
+  # laufenden Alarm davor, durch ein Lösch-Event vorzeitig beendet zu werden.
+  recently_fired: >
+    {% set items = state_attr(source_timer, 'active') or [] %}
+    {% set now_ms = now().timestamp() * 1000 %}
+    {% set win = (alarm_duration | int(10) + 2) * 1000 %}
+    {% set r = items | selectattr('triggerTime', 'defined')
+                     | selectattr('triggerTime', 'gt', now_ms - win)
+                     | selectattr('triggerTime', 'le', now_ms) | list %}
+    {{ r | length > 0 }}
   # Formatierter Countdown-Text (MM:SS oder H:MM:SS)
   countdown_text: >
     {% set s = [secs_left | float(0), 0] | max | int %}
@@ -323,10 +327,14 @@ actions:
                   payload: >-
                     {"text":"{{ countdown_text }}","color":{{ countdown_color | to_json }},"pushIcon":0,"duration":5{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
 
-      # ── Timer abgebrochen (zukünftiger Timer verschwunden): löschen ─
+      # ── Kein Timer mehr (abgebrochen/entfernt): Anzeige löschen ─────
+      # Nur bei einem Änderungs-Event (source), nicht bei jedem Tick → kein
+      # MQTT-Spam. "not recently_fired" schützt den gerade laufenden Alarm.
       - conditions:
           - condition: template
-            value_template: "{{ timer_cancelled | bool }}"
+            value_template: >-
+              {{ trigger.id == 'source' and secs_left == 'none'
+                 and not (recently_fired | bool) }}
         sequence:
           - if:
               - condition: template
