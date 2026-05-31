@@ -1,5 +1,5 @@
 blueprint:
-  name: Alexa Timer → AWTRIX 3 (v1.8)
+  name: Alexa Timer → AWTRIX 3 (v1.9)
   description: >
     Zeigt den nächsten Alexa-Timer als Live-Countdown auf einem AWTRIX-3-Display
     (Ulanzi / awtrix-light) an und löst beim Ablauf einen Alarm aus.
@@ -36,6 +36,10 @@ blueprint:
                             unavailable/Müll) -> AWTRIX-Anzeige löschen.
 
     Changelog:
+      v1.9 - Zielzeit wird jetzt per "variables"-Schritt fest eingefroren
+             (locked_target). Behebt, dass die Schleife bei 00:00 "klebte" und
+             LOS erst beim Beenden des Timers kam (die gemerkte Zielzeit wurde
+             im Schleifen-Kontext faktisch live neu berechnet).
       v1.8 - LOS kommt jetzt PÜNKTLICH bei 00:00: Zielzeit wird beim Start
              gemerkt (target_epoch) und der Alarm exakt bei Erreichen ausgelöst.
              Behebt das "klebt bei 00:00 bis Timer-Aus": beim Klingeln bleibt der
@@ -283,11 +287,14 @@ actions:
           - condition: template
             value_template: "{{ counting | bool }}"
         sequence:
+          # Zielzeit EINMAL einfrieren (als Zahl gespeichert, ändert sich nicht).
+          - variables:
+              locked_target: "{{ target_epoch | float(0) }}"
           - repeat:
               while:
                 # Zielzeit noch nicht erreicht ...
                 - condition: template
-                  value_template: "{{ (target_epoch | float(0)) - now().timestamp() > 0 }}"
+                  value_template: "{{ locked_target - now().timestamp() > 0 }}"
                 # ... UND der Timer wurde nicht abgebrochen (Sensor noch gültig).
                 - condition: template
                   value_template: "{{ states(source_timer) not in ['unavailable', 'unknown', '', 'Kein Timer gestellt'] }}"
@@ -301,7 +308,7 @@ actions:
                       data:
                         topic: "{{ topic_notify }}"
                         payload: >-
-                          {% set s = [(target_epoch | float(0)) - now().timestamp(), 0] | max | int %}
+                          {% set s = [locked_target - now().timestamp(), 0] | max | int %}
                           {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
                           {% set txt = ('%d:%02d:%02d' | format(h, m, sec)) if (always_show_hours or h > 0) else ('%02d:%02d' | format(m, sec)) %}
                           {"text":"{{ txt }}","color":{{ countdown_color | to_json }},"pushIcon":0,"hold":true,"stack":false,"wakeup":true{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
@@ -311,7 +318,7 @@ actions:
                       data:
                         topic: "{{ topic_custom }}"
                         payload: >-
-                          {% set s = [(target_epoch | float(0)) - now().timestamp(), 0] | max | int %}
+                          {% set s = [locked_target - now().timestamp(), 0] | max | int %}
                           {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
                           {% set txt = ('%d:%02d:%02d' | format(h, m, sec)) if (always_show_hours or h > 0) else ('%02d:%02d' | format(m, sec)) %}
                           {"text":"{{ txt }}","color":{{ countdown_color | to_json }},"pushIcon":0,"duration":5{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
@@ -320,7 +327,7 @@ actions:
               # Zielzeit erreicht -> regulärer Ablauf -> Alarm
               - conditions:
                   - condition: template
-                    value_template: "{{ (target_epoch | float(0)) - now().timestamp() <= 0 }}"
+                    value_template: "{{ locked_target - now().timestamp() <= 0 }}"
                 sequence:
                   - action: mqtt.publish
                     data:
