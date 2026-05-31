@@ -1,5 +1,5 @@
 blueprint:
-  name: Alexa Timer → AWTRIX 3 (v1.5)
+  name: Alexa Timer → AWTRIX 3 (v1.6)
   description: >
     Zeigt den nächsten Alexa-Timer als Live-Countdown auf einem AWTRIX-3-Display
     (Ulanzi / awtrix-light) an und löst beim Ablauf einen Alarm aus.
@@ -10,7 +10,8 @@ blueprint:
       • Der Countdown wird inline aus dem STATE des Alexa-Timer-Sensors berechnet
         (kein separater Template-Sensor, kein homeassistant.update_entity-Loop,
         kein Helfer).
-      • Aktualisierung im Sekundentakt per time_pattern-Trigger (mode: restart).
+      • Sekundengenaue Aktualisierung in einer Schleife, die NUR während eines
+        laufenden Timers läuft. KEIN Sekunden-Trigger -> im Leerlauf null Last.
       • Beim Ablauf wird ein Alarm über .../notify gesendet.
 
     Anzeige-Modus (wählbar):
@@ -36,6 +37,11 @@ blueprint:
       daher KEINEN Alarm aus (auch nicht beim Stellen eines neuen Timers).
 
     Changelog:
+      v1.6 - Sekunden-Trigger entfernt -> keine Dauerlast im Leerlauf. Countdown
+             läuft jetzt in einer Schleife nur während eines aktiven Timers;
+             getriggert wird nur bei Zustandsänderung des Sensors + HA-Start.
+             Ablauf wird zeitbasiert beim Schleifenende erkannt (plus Fallback
+             über den Sensorwechsel).
       v1.5 - Zurück zur einfachen State-Quelle OHNE Helfer/Attribute. Ablauf wird
              beim State-Wechsel erkannt, wenn die vorherige Zielzeit im engen
              Fenster (−2…+5 s) erreicht wurde. Behebt "sofort LOS": alter Müll
@@ -262,25 +268,81 @@ variables:
   cancelled: >
     {{ not (counting | bool) and prev_elapsed != 'none'
        and (prev_elapsed | float(-9e9)) < -2 }}
-  # Formatierter Countdown-Text (MM:SS oder H:MM:SS)
-  countdown_text: >
-    {% set s = [cur_secs | float(0), 0] | max | int %}
-    {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
-    {% if always_show_hours or h > 0 %}{{ '%d:%02d:%02d' | format(h, m, sec) }}{% else %}{{ '%02d:%02d' | format(m, sec) }}{% endif %}
-
 triggers:
-  - trigger: time_pattern
-    seconds: "/1"
-    id: tick
+  # Nur bei Zustandsänderung des Alexa-Sensors (Timer gestellt/abgelaufen/
+  # abgebrochen). KEIN Sekunden-Trigger -> im Leerlauf keine Last.
   - trigger: state
     entity_id: !input source_timer
     id: source
+  # Nach HA-Neustart laufenden Timer wieder anzeigen.
+  - trigger: homeassistant
+    event: start
+    id: hastart
 
 conditions: []
 
 actions:
   - choose:
-      # ── Timer abgelaufen: Alarm + Anzeige aufräumen ─────────────
+      # ── Timer läuft: Countdown-Schleife (nur solange aktiv) ─────
+      # Aktualisiert die Anzeige jede Sekunde, OHNE globalen Sekunden-Trigger.
+      # mode: restart bricht die Schleife bei jeder neuen Zustandsänderung ab
+      # (Ablauf/Abbruch/neuer Timer) und der passende Zweig übernimmt.
+      - conditions:
+          - condition: template
+            value_template: "{{ counting | bool }}"
+        sequence:
+          - repeat:
+              while:
+                - condition: template
+                  value_template: >
+                    {% set nt = states(source_timer) %}
+                    {% set t = as_datetime(nt) if nt not in ['unknown', 'unavailable', '', 'Kein Timer gestellt'] else none %}
+                    {{ t is not none and (t - now()).total_seconds() > 0 }}
+              sequence:
+                - if:
+                    - condition: template
+                      value_template: "{{ display_mode == 'pinned' }}"
+                  then:
+                    # Angepinnt: gehaltene Notification, überdeckt andere Apps
+                    - action: mqtt.publish
+                      data:
+                        topic: "{{ topic_notify }}"
+                        payload: >-
+                          {% set t = as_datetime(states(source_timer)) %}
+                          {% set s = [(t - now()).total_seconds() | int, 0] | max %}
+                          {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
+                          {% set txt = ('%d:%02d:%02d' | format(h, m, sec)) if (always_show_hours or h > 0) else ('%02d:%02d' | format(m, sec)) %}
+                          {"text":"{{ txt }}","color":{{ countdown_color | to_json }},"pushIcon":0,"hold":true,"stack":false,"wakeup":true{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
+                  else:
+                    # Im App-Wechsel: Custom App
+                    - action: mqtt.publish
+                      data:
+                        topic: "{{ topic_custom }}"
+                        payload: >-
+                          {% set t = as_datetime(states(source_timer)) %}
+                          {% set s = [(t - now()).total_seconds() | int, 0] | max %}
+                          {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
+                          {% set txt = ('%d:%02d:%02d' | format(h, m, sec)) if (always_show_hours or h > 0) else ('%02d:%02d' | format(m, sec)) %}
+                          {"text":"{{ txt }}","color":{{ countdown_color | to_json }},"pushIcon":0,"duration":5{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
+                - delay: "00:00:01"
+          # Schleife beendet, weil die Zielzeit erreicht wurde (ein Abbruch/
+          # Zustandswechsel hätte den Lauf via mode:restart vorher beendet)
+          # -> regulärer Ablauf -> Alarm.
+          - action: mqtt.publish
+            data:
+              topic: "{{ topic_notify }}"
+              payload: >-
+                {"text":"{{ alarm_text }}","color":{{ alarm_color | to_json }},"center":true,"duration":{{ alarm_duration }},"wakeup":true{% if alarm_blink %},"blinkText":700{% endif %}{% if alarm_effect not in ['none', '', None] %},"effect":"{{ alarm_effect }}"{% endif %}}
+          - if:
+              - condition: template
+                value_template: "{{ display_mode == 'app' }}"
+            then:
+              - action: mqtt.publish
+                data:
+                  topic: "{{ topic_custom }}"
+                  payload: ""
+
+      # ── Timer abgelaufen (vom Sensorwechsel erkannt, Fallback): Alarm ───
       - conditions:
           - condition: template
             value_template: "{{ expired | bool }}"
@@ -302,29 +364,6 @@ actions:
                   topic: "{{ topic_custom }}"
                   payload: ""
 
-      # ── Timer läuft: Countdown anzeigen ─────────────────────────
-      - conditions:
-          - condition: template
-            value_template: "{{ counting | bool }}"
-        sequence:
-          - if:
-              - condition: template
-                value_template: "{{ display_mode == 'pinned' }}"
-            then:
-              # Angepinnt: gehaltene Notification, überdeckt andere Apps
-              - action: mqtt.publish
-                data:
-                  topic: "{{ topic_notify }}"
-                  payload: >-
-                    {"text":"{{ countdown_text }}","color":{{ countdown_color | to_json }},"pushIcon":0,"hold":true,"stack":false,"wakeup":true{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
-            else:
-              # Im App-Wechsel: Custom App
-              - action: mqtt.publish
-                data:
-                  topic: "{{ topic_custom }}"
-                  payload: >-
-                    {"text":"{{ countdown_text }}","color":{{ countdown_color | to_json }},"pushIcon":0,"duration":5{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
-
       # ── Timer abgebrochen (vor Ablauf verschwunden): Anzeige löschen ─
       - conditions:
           - condition: template
@@ -343,5 +382,5 @@ actions:
                 data:
                   topic: "{{ topic_custom }}"
                   payload: ""
-    # ── Idle-Tick ohne Timer: nichts tun (vermeidet MQTT-Spam) ────
+    # ── Sonst (kein relevanter Fall): nichts tun ────────────────
     default: []
