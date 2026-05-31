@@ -1,5 +1,5 @@
 blueprint:
-  name: Alexa Timer → AWTRIX 3 (v1.7)
+  name: Alexa Timer → AWTRIX 3 (v1.8)
   description: >
     Zeigt den nächsten Alexa-Timer als Live-Countdown auf einem AWTRIX-3-Display
     (Ulanzi / awtrix-light) an und löst beim Ablauf einen Alarm aus.
@@ -36,6 +36,14 @@ blueprint:
                             unavailable/Müll) -> AWTRIX-Anzeige löschen.
 
     Changelog:
+      v1.8 - LOS kommt jetzt PÜNKTLICH bei 00:00: Zielzeit wird beim Start
+             gemerkt (target_epoch) und der Alarm exakt bei Erreichen ausgelöst.
+             Behebt das "klebt bei 00:00 bis Timer-Aus": beim Klingeln bleibt der
+             Alexa-Sensor auf ~jetzt stehen, was die alte Live-Berechnung
+             blockierte. mode: single (statt restart), damit der Zustandswechsel
+             im Ablauf-Moment die Schleife nicht abbricht; Abbruch wird in der
+             Schleife selbst erkannt. Alarm bleibt stehen, bis der Timer auf
+             Alexa beendet wird (-> unavailable -> löschen).
       v1.7 - Vereinfacht (wie das funktionierende Original): Alarm NUR beim
              Erreichen der Zielzeit (Schleifenende). Abbruch-Erkennung ersetzt
              durch simples "kein laufender Timer -> Anzeige löschen" -> behebt
@@ -215,7 +223,7 @@ blueprint:
             - label: "ColorWaves"
               value: "ColorWaves"
 
-mode: restart
+mode: single
 max_exceeded: silent
 
 variables:
@@ -234,17 +242,23 @@ variables:
   topic_custom: "{{ awtrix_prefix }}/custom/{{ app_name }}"
   topic_notify: "{{ awtrix_prefix }}/notify"
   topic_dismiss: "{{ awtrix_prefix }}/notify/dismiss"
-  # Sekunden bis zur Zielzeit laut aktuellem STATE: Zahl oder "none".
-  cur_secs: >
+  # Zielzeit des Timers als Unix-Zeit (beim Trigger gemerkt!). 0 = Sensor zeigt
+  # keinen Zeitstempel (unavailable/kein Timer). Beim Ablauf "klebt" der Alexa-
+  # Sensor auf ~jetzt; deshalb merken wir die echte Zielzeit beim Start der
+  # Schleife und lösen exakt dann den Alarm aus.
+  target_epoch: >
     {% set nt = states(source_timer) %}
     {% if nt not in ['unknown', 'unavailable', '', 'Kein Timer gestellt'] %}
       {% set t = as_datetime(nt) %}
-      {{ ((t - now()).total_seconds() | round(1)) if t is not none else 'none' }}
+      {{ (t.timestamp() | round(0)) if t is not none else 0 }}
     {% else %}
-      none
+      0
     {% endif %}
-  # Timer läuft -> Zielzeit liegt in der Zukunft.
-  counting: "{{ cur_secs != 'none' and (cur_secs | float(-9e9)) > 0 }}"
+  # Echter laufender Timer? Zielzeit liegt > 2 s in der Zukunft (verhindert, dass
+  # der "klebende" ~jetzt-Wert beim Klingeln erneut als Countdown startet).
+  counting: "{{ (target_epoch | float(0)) > 0 and (target_epoch | float(0)) - now().timestamp() > 2 }}"
+  # Sensor zeigt gar keinen Zeitstempel (z. B. unavailable nach Abbruch/Dismiss).
+  no_timer: "{{ (target_epoch | float(0)) == 0 }}"
 
 triggers:
   # Nur bei Zustandsänderung des Alexa-Sensors (Timer gestellt/abgelaufen/
@@ -261,21 +275,22 @@ conditions: []
 
 actions:
   - choose:
-      # ── Timer läuft: Countdown-Schleife (nur solange aktiv) ─────
-      # Aktualisiert die Anzeige jede Sekunde, OHNE globalen Sekunden-Trigger.
-      # mode: restart bricht die Schleife bei jeder neuen Zustandsänderung ab
-      # (Ablauf/Abbruch/neuer Timer) und der passende Zweig übernimmt.
+      # ── Timer läuft: Countdown-Schleife (mode: single, nur 1×) ──────
+      # Die Schleife nutzt die GEMERKTE Zielzeit (target_epoch). Sie endet, wenn
+      # die Zielzeit erreicht ist ODER der Sensor keinen Timer mehr zeigt
+      # (Abbruch). Danach wird je nach Grund Alarm gezeigt oder gelöscht.
       - conditions:
           - condition: template
             value_template: "{{ counting | bool }}"
         sequence:
           - repeat:
               while:
+                # Zielzeit noch nicht erreicht ...
                 - condition: template
-                  value_template: >
-                    {% set nt = states(source_timer) %}
-                    {% set t = as_datetime(nt) if nt not in ['unknown', 'unavailable', '', 'Kein Timer gestellt'] else none %}
-                    {{ t is not none and (t - now()).total_seconds() > 0 }}
+                  value_template: "{{ (target_epoch | float(0)) - now().timestamp() > 0 }}"
+                # ... UND der Timer wurde nicht abgebrochen (Sensor noch gültig).
+                - condition: template
+                  value_template: "{{ states(source_timer) not in ['unavailable', 'unknown', '', 'Kein Timer gestellt'] }}"
               sequence:
                 - if:
                     - condition: template
@@ -286,8 +301,7 @@ actions:
                       data:
                         topic: "{{ topic_notify }}"
                         payload: >-
-                          {% set t = as_datetime(states(source_timer)) %}
-                          {% set s = [(t - now()).total_seconds() | int, 0] | max %}
+                          {% set s = [(target_epoch | float(0)) - now().timestamp(), 0] | max | int %}
                           {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
                           {% set txt = ('%d:%02d:%02d' | format(h, m, sec)) if (always_show_hours or h > 0) else ('%02d:%02d' | format(m, sec)) %}
                           {"text":"{{ txt }}","color":{{ countdown_color | to_json }},"pushIcon":0,"hold":true,"stack":false,"wakeup":true{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
@@ -297,49 +311,58 @@ actions:
                       data:
                         topic: "{{ topic_custom }}"
                         payload: >-
-                          {% set t = as_datetime(states(source_timer)) %}
-                          {% set s = [(t - now()).total_seconds() | int, 0] | max %}
+                          {% set s = [(target_epoch | float(0)) - now().timestamp(), 0] | max | int %}
                           {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
                           {% set txt = ('%d:%02d:%02d' | format(h, m, sec)) if (always_show_hours or h > 0) else ('%02d:%02d' | format(m, sec)) %}
                           {"text":"{{ txt }}","color":{{ countdown_color | to_json }},"pushIcon":0,"duration":5{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
                 - delay: "00:00:01"
-          # Schleife beendet, weil die Zielzeit erreicht wurde (ein Abbruch/
-          # Zustandswechsel hätte den Lauf via mode:restart vorher beendet)
-          # -> regulärer Ablauf -> Alarm.
-          - action: mqtt.publish
-            data:
-              topic: "{{ topic_notify }}"
-              payload: >-
-                {"text":"{{ alarm_text }}","color":{{ alarm_color | to_json }},"center":true,"duration":{{ alarm_duration }},"wakeup":true{% if alarm_blink %},"blinkText":700{% endif %}{% if alarm_effect not in ['none', '', None] %},"effect":"{{ alarm_effect }}"{% endif %}}
-          - if:
-              - condition: template
-                value_template: "{{ display_mode == 'app' }}"
-            then:
-              - action: mqtt.publish
-                data:
-                  topic: "{{ topic_custom }}"
-                  payload: ""
+          - choose:
+              # Zielzeit erreicht -> regulärer Ablauf -> Alarm
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (target_epoch | float(0)) - now().timestamp() <= 0 }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "{{ topic_notify }}"
+                      payload: >-
+                        {"text":"{{ alarm_text }}","color":{{ alarm_color | to_json }},"center":true,"duration":{{ alarm_duration }},"wakeup":true{% if alarm_blink %},"blinkText":700{% endif %}{% if alarm_effect not in ['none', '', None] %},"effect":"{{ alarm_effect }}"{% endif %}}
+                  # Countdown-App entfernen (LOS ist eine eigene Notification)
+                  - if:
+                      - condition: template
+                        value_template: "{{ display_mode == 'app' }}"
+                    then:
+                      - action: mqtt.publish
+                        data:
+                          topic: "{{ topic_custom }}"
+                          payload: ""
+            # Schleife endete vorzeitig (Timer abgebrochen) -> Anzeige löschen
+            default:
+              - if:
+                  - condition: template
+                    value_template: "{{ display_mode == 'pinned' }}"
+                then:
+                  - action: mqtt.publish
+                    data: { topic: "{{ topic_dismiss }}", payload: "" }
+                else:
+                  - action: mqtt.publish
+                    data: { topic: "{{ topic_custom }}", payload: "" }
 
-      # ── Kein laufender Timer (abgebrochen/abgelaufen/keiner): löschen ─
-      # Wird ausgelöst, sobald der Sensor keinen Timer in der Zukunft mehr zeigt
-      # (Abbruch -> unavailable/Müll). Räumt die AWTRIX-Anzeige auf. Im App-Modus
-      # bleibt ein evtl. laufender Alarm (Notification) erhalten; im Pinned-Modus
-      # wird die gehaltene Anzeige verworfen.
+      # ── Sensor zeigt keinen Timer (z. B. unavailable nach Dismiss): löschen ─
+      # Während des Klingelns "klebt" der Sensor auf ~jetzt (kein 0-Wert) -> dieser
+      # Zweig greift NICHT, der Alarm bleibt also stehen, bis der Timer auf Alexa
+      # beendet wird (dann -> unavailable -> hier gelöscht).
       - conditions:
           - condition: template
-            value_template: "{{ not (counting | bool) }}"
+            value_template: "{{ no_timer | bool }}"
         sequence:
           - if:
               - condition: template
                 value_template: "{{ display_mode == 'pinned' }}"
             then:
               - action: mqtt.publish
-                data:
-                  topic: "{{ topic_dismiss }}"
-                  payload: ""
+                data: { topic: "{{ topic_dismiss }}", payload: "" }
             else:
               - action: mqtt.publish
-                data:
-                  topic: "{{ topic_custom }}"
-                  payload: ""
+                data: { topic: "{{ topic_custom }}", payload: "" }
     default: []
