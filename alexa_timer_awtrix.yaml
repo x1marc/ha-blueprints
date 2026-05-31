@@ -1,5 +1,5 @@
 blueprint:
-  name: Alexa Timer → AWTRIX 3 (v1.6)
+  name: Alexa Timer → AWTRIX 3 (v1.7)
   description: >
     Zeigt den nächsten Alexa-Timer als Live-Countdown auf einem AWTRIX-3-Display
     (Ulanzi / awtrix-light) an und löst beim Ablauf einen Alarm aus.
@@ -27,21 +27,22 @@ blueprint:
         STATE die Zielzeit (ISO-Zeitstempel in der Zukunft); ohne Timer ein
         unbrauchbarer Wert (~jetzt) — der wird ignoriert.
 
-    Funktionsweise des Alarms (ohne Fehlalarm):
-      • "Timer läuft"  = STATE liegt in der Zukunft  -> Countdown.
-      • "Abgelaufen"   = beim State-Wechsel war die VORHERIGE Zielzeit gerade
-                         eben (−2…+5 s) erreicht  -> Alarm.
-      • "Abgebrochen"  = vorherige Zielzeit lag noch deutlich in der Zukunft
-                         -> Anzeige löschen, kein Alarm.
-      Alte/abgelaufene Müllwerte liegen weit außerhalb des Fensters und lösen
-      daher KEINEN Alarm aus (auch nicht beim Stellen eines neuen Timers).
+    Funktionsweise (einfach wie im Original):
+      • "Timer läuft"     = STATE in der Zukunft -> Countdown-Schleife.
+      • "Zeit erreicht"   = Schleife läuft bis zur Zielzeit -> Alarm. Der Alarm
+                            kommt AUSSCHLIESSLICH vom Erreichen der Zielzeit,
+                            daher NIE ein Fehlalarm beim Stellen/Abbrechen.
+      • "Kein Timer mehr" = Sensor zeigt keinen Zukunfts-Timer (Abbruch ->
+                            unavailable/Müll) -> AWTRIX-Anzeige löschen.
 
     Changelog:
+      v1.7 - Vereinfacht (wie das funktionierende Original): Alarm NUR beim
+             Erreichen der Zielzeit (Schleifenende). Abbruch-Erkennung ersetzt
+             durch simples "kein laufender Timer -> Anzeige löschen" -> behebt
+             das Nicht-Löschen beim Abbrechen. from_state-Raterei entfernt.
       v1.6 - Sekunden-Trigger entfernt -> keine Dauerlast im Leerlauf. Countdown
-             läuft jetzt in einer Schleife nur während eines aktiven Timers;
-             getriggert wird nur bei Zustandsänderung des Sensors + HA-Start.
-             Ablauf wird zeitbasiert beim Schleifenende erkannt (plus Fallback
-             über den Sensorwechsel).
+             läuft in einer Schleife nur während eines aktiven Timers; getriggert
+             nur bei Zustandsänderung des Sensors + HA-Start.
       v1.5 - Zurück zur einfachen State-Quelle OHNE Helfer/Attribute. Ablauf wird
              beim State-Wechsel erkannt, wenn die vorherige Zielzeit im engen
              Fenster (−2…+5 s) erreicht wurde. Behebt "sofort LOS": alter Müll
@@ -244,30 +245,7 @@ variables:
     {% endif %}
   # Timer läuft -> Zielzeit liegt in der Zukunft.
   counting: "{{ cur_secs != 'none' and (cur_secs | float(-9e9)) > 0 }}"
-  # Sekunden seit der VORHERIGEN Zielzeit (nur bei State-Wechsel sinnvoll):
-  # >0 = vorheriges Ziel bereits erreicht, <0 = lag noch in der Zukunft.
-  prev_elapsed: >
-    {% if trigger.id == 'source' and trigger.from_state is not none %}
-      {% set f = trigger.from_state.state %}
-      {% if f not in ['unknown', 'unavailable', '', 'Kein Timer gestellt'] %}
-        {% set ft = as_datetime(f) %}
-        {{ ((now() - ft).total_seconds() | round(1)) if ft is not none else 'none' }}
-      {% else %}
-        none
-      {% endif %}
-    {% else %}
-      none
-    {% endif %}
-  # Abgelaufen: kein laufender Timer mehr UND die vorherige Zielzeit wurde gerade
-  # eben erreicht (Fenster −2…+5 s). Alter Müll liegt weit darüber -> kein Alarm.
-  expired: >
-    {{ not (counting | bool) and prev_elapsed != 'none'
-       and (prev_elapsed | float(9e9)) >= -2
-       and (prev_elapsed | float(9e9)) <= 5 }}
-  # Abgebrochen: vorherige Zielzeit lag noch deutlich in der Zukunft (> 2 s).
-  cancelled: >
-    {{ not (counting | bool) and prev_elapsed != 'none'
-       and (prev_elapsed | float(-9e9)) < -2 }}
+
 triggers:
   # Nur bei Zustandsänderung des Alexa-Sensors (Timer gestellt/abgelaufen/
   # abgebrochen). KEIN Sekunden-Trigger -> im Leerlauf keine Last.
@@ -342,32 +320,14 @@ actions:
                   topic: "{{ topic_custom }}"
                   payload: ""
 
-      # ── Timer abgelaufen (vom Sensorwechsel erkannt, Fallback): Alarm ───
+      # ── Kein laufender Timer (abgebrochen/abgelaufen/keiner): löschen ─
+      # Wird ausgelöst, sobald der Sensor keinen Timer in der Zukunft mehr zeigt
+      # (Abbruch -> unavailable/Müll). Räumt die AWTRIX-Anzeige auf. Im App-Modus
+      # bleibt ein evtl. laufender Alarm (Notification) erhalten; im Pinned-Modus
+      # wird die gehaltene Anzeige verworfen.
       - conditions:
           - condition: template
-            value_template: "{{ expired | bool }}"
-        sequence:
-          # Alarm anzeigen (ersetzt im Pinned-Modus automatisch den Countdown,
-          # da stack:false). Kein separates dismiss nötig.
-          - action: mqtt.publish
-            data:
-              topic: "{{ topic_notify }}"
-              payload: >-
-                {"text":"{{ alarm_text }}","color":{{ alarm_color | to_json }},"center":true,"duration":{{ alarm_duration }},"wakeup":true{% if alarm_blink %},"blinkText":700{% endif %}{% if alarm_effect not in ['none', '', None] %},"effect":"{{ alarm_effect }}"{% endif %}}
-          # Custom App entfernen (nur App-Modus)
-          - if:
-              - condition: template
-                value_template: "{{ display_mode == 'app' }}"
-            then:
-              - action: mqtt.publish
-                data:
-                  topic: "{{ topic_custom }}"
-                  payload: ""
-
-      # ── Timer abgebrochen (vor Ablauf verschwunden): Anzeige löschen ─
-      - conditions:
-          - condition: template
-            value_template: "{{ cancelled | bool }}"
+            value_template: "{{ not (counting | bool) }}"
         sequence:
           - if:
               - condition: template
@@ -382,5 +342,4 @@ actions:
                 data:
                   topic: "{{ topic_custom }}"
                   payload: ""
-    # ── Sonst (kein relevanter Fall): nichts tun ────────────────
     default: []
