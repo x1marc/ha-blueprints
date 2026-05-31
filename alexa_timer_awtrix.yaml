@@ -1,0 +1,356 @@
+blueprint:
+  name: Alexa Timer → AWTRIX 3 (v1.2)
+  description: >
+    Zeigt den nächsten Alexa-Timer als Live-Countdown auf einem AWTRIX-3-Display
+    (Ulanzi / awtrix-light) an und löst beim Ablauf einen Alarm aus.
+
+    Ersetzt den alten Aufbau aus 2 Template-Sensoren + 4 Automationen durch
+    EINE einzige Automation:
+
+      • Der Countdown wird inline aus dem Alexa-Timer-Sensor berechnet
+        (kein separater Template-Sensor, kein homeassistant.update_entity-Loop).
+      • Aktualisierung im Sekundentakt per time_pattern-Trigger (mode: restart,
+        also keine konkurrierenden repeat-while-Schleifen mehr).
+      • Beim Ablauf wird ein Alarm über .../notify gesendet.
+
+    Anzeige-Modus (wählbar):
+      • "Im App-Wechsel": Custom App (Topic .../custom/<name>) — rotiert mit den
+        übrigen AWTRIX-Apps im Loop. Flackerfrei, firmware-native für Live-Werte.
+      • "Nur Timer anpinnen": gehaltene Notification (hold:true) — überdeckt alle
+        anderen Apps, bis der Timer endet. Kein App-Wechsel.
+
+    Voraussetzungen:
+      • MQTT-Integration aktiv und AWTRIX per MQTT verbunden.
+      • Quelle ist der "next timer"-Sensor von Alexa Media Player (HACS),
+        z. B. sensor.alexa_wohnzimmer_next_timer (ISO-Zeitstempel im State).
+
+    Hinweis: Der Ablauf-Alarm wird nur ausgelöst, wenn der Timer wirklich
+    abgelaufen ist (der vorherige Zeitstempel ist erreicht) — nicht beim
+    Stellen, Abbrechen oder kurzem "Flackern" des Alexa-Sensors. Optional kann
+    zusätzlich beim rechnerischen Erreichen von 0 ausgelöst werden (Erweitert).
+
+    Changelog:
+      v1.2 - Fehlalarm-Fix: Alarm feuert nur noch bei echtem Ablauf (Prüfung
+             des vorherigen Zeitstempels via trigger.from_state), nicht mehr bei
+             Sensor-Flackern/Timer-Stellen. Neuer Aufräum-Zweig für
+             abgebrochene/entfernte Timer (löscht Anzeige ohne Alarm).
+      v1.1 - Anzeige-Modus "Nur Timer anpinnen" (gehaltene Notification);
+             Farbauswahl per Farbrad (color_rgb); Alarm-Effekt als Dropdown
+             (gültige AWTRIX-Effektnamen); Blinken des Alarm-Textes optional.
+      v1.0 - Erstausgabe: ein Sensor + eine Automation ersetzen den alten
+             Aufbau aus 2 Template-Sensoren + 4 Automationen.
+
+  domain: automation
+  source_url: https://github.com/x1marc/ha-blueprints/blob/main/alexa_timer_awtrix.yaml
+
+  input:
+    # ─── ⏱️ QUELLE ────────────────────────────────────────────────
+    source_timer:
+      name: Alexa Timer-Sensor
+      description: >
+        Der "next timer"-Sensor von Alexa Media Player. Sein State muss ein
+        Zeitstempel des nächsten Timers sein (oder unavailable, wenn keiner läuft).
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+
+    # ─── 📟 AWTRIX ────────────────────────────────────────────────
+    awtrix_prefix:
+      name: AWTRIX MQTT-Topic-Präfix
+      description: >
+        Das Topic-Präfix des Geräts (steht in den AWTRIX-Geräteeinstellungen,
+        Standard: "awtrix"). Es wird "/custom/<App>", "/notify" bzw.
+        "/notify/dismiss" angehängt.
+      default: "awtrix"
+      selector:
+        text: {}
+
+    app_name:
+      name: Name der Custom App
+      description: >
+        Interner Name der AWTRIX-App für den Countdown (Topic .../custom/<Name>).
+        Nur im Modus "Im App-Wechsel" relevant.
+      default: "alexatimer"
+      selector:
+        text: {}
+
+    # ─── 🖥️ ANZEIGE-MODUS ─────────────────────────────────────────
+    display_mode:
+      name: Anzeige-Modus
+      description: >
+        "Im App-Wechsel": Timer rotiert als App mit den übrigen AWTRIX-Apps.
+        "Nur Timer anpinnen": Timer wird gehalten und überdeckt alle anderen
+        Apps, bis er abläuft (kein App-Wechsel).
+      default: app
+      selector:
+        select:
+          options:
+            - label: "Im App-Wechsel (rotiert mit anderen Apps)"
+              value: app
+            - label: "Nur Timer anpinnen (kein App-Wechsel)"
+              value: pinned
+
+    # ─── 🎨 COUNTDOWN-ANZEIGE ─────────────────────────────────────
+    countdown_color:
+      name: Farbe des Countdowns
+      description: Farbe für den Countdown-Text (Farbrad).
+      default: [172, 7, 242]
+      selector:
+        color_rgb: {}
+
+    countdown_icon:
+      name: Icon (optional)
+      description: >
+        AWTRIX-Icon-ID für die Countdown-Anzeige (leer = kein Icon).
+      default: ""
+      selector:
+        text: {}
+
+    always_show_hours:
+      name: Stunden immer anzeigen
+      description: >
+        Aus = HH nur anzeigen, wenn > 0 (sonst MM:SS). An = immer H:MM:SS.
+      default: false
+      selector:
+        boolean: {}
+
+    # ─── 🔔 ALARM ─────────────────────────────────────────────────
+    alarm_text:
+      name: Alarm-Text
+      description: Text, der beim Ablauf des Timers angezeigt wird.
+      default: "!!!LOS!!!"
+      selector:
+        text: {}
+
+    alarm_color:
+      name: Alarm-Farbe
+      description: Farbe des Alarm-Textes (Farbrad).
+      default: [255, 0, 0]
+      selector:
+        color_rgb: {}
+
+    alarm_blink:
+      name: Alarm-Text blinken
+      description: >
+        An = der Alarm-Text blinkt. Aus = der Text steht still (besser lesbar,
+        vor allem in Kombination mit einem Hintergrundeffekt).
+      default: true
+      selector:
+        boolean: {}
+
+    alarm_duration:
+      name: Alarm-Anzeigedauer (Sekunden)
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: s
+          mode: slider
+
+    alarm_effect:
+      name: Alarm-Effekt
+      description: >
+        AWTRIX-Hintergrundeffekt für den Alarm. "Kein Effekt" zeigt nur Text +
+        Farbe. Die Auswahl enthält die gültigen Effektnamen der AWTRIX-3-Firmware
+        (awtrix-light) — so sind Tippfehler ausgeschlossen.
+      default: "PlasmaCloud"
+      selector:
+        select:
+          options:
+            - label: "Kein Effekt"
+              value: "none"
+            - label: "Fade"
+              value: "Fade"
+            - label: "MovingLine"
+              value: "MovingLine"
+            - label: "BrickBreaker"
+              value: "BrickBreaker"
+            - label: "PingPong"
+              value: "PingPong"
+            - label: "Radar"
+              value: "Radar"
+            - label: "Checkerboard"
+              value: "Checkerboard"
+            - label: "Fireworks"
+              value: "Fireworks"
+            - label: "PlasmaCloud"
+              value: "PlasmaCloud"
+            - label: "Ripple"
+              value: "Ripple"
+            - label: "Snake"
+              value: "Snake"
+            - label: "Pacifica"
+              value: "Pacifica"
+            - label: "TheaterChase"
+              value: "TheaterChase"
+            - label: "Plasma"
+              value: "Plasma"
+            - label: "Matrix"
+              value: "Matrix"
+            - label: "SwirlIn"
+              value: "SwirlIn"
+            - label: "SwirlOut"
+              value: "SwirlOut"
+            - label: "LookingEyes"
+              value: "LookingEyes"
+            - label: "TwinklingStars"
+              value: "TwinklingStars"
+            - label: "ColorWaves"
+              value: "ColorWaves"
+
+    # ─── ⚙️ ERWEITERT ─────────────────────────────────────────────
+    alarm_on_zero:
+      name: Alarm auch bei rechnerischer 0 auslösen
+      description: >
+        Zusätzlich auslösen, sobald der berechnete Countdown 0 erreicht — auch
+        wenn der Quell-Sensor noch nicht gewechselt hat. Nur aktivieren, falls
+        dein Alexa-Sensor beim Klingeln NICHT zuverlässig auf unavailable wechselt.
+        Kann zu mehrfachem Alarm führen, falls der Sensor länger auf einem
+        vergangenen Zeitstempel stehen bleibt.
+      default: false
+      selector:
+        boolean: {}
+
+mode: restart
+max_exceeded: silent
+
+variables:
+  source_timer: !input source_timer
+  awtrix_prefix: !input awtrix_prefix
+  app_name: !input app_name
+  display_mode: !input display_mode
+  countdown_color: !input countdown_color
+  countdown_icon: !input countdown_icon
+  always_show_hours: !input always_show_hours
+  alarm_text: !input alarm_text
+  alarm_color: !input alarm_color
+  alarm_blink: !input alarm_blink
+  alarm_duration: !input alarm_duration
+  alarm_effect: !input alarm_effect
+  alarm_on_zero: !input alarm_on_zero
+  topic_custom: "{{ awtrix_prefix }}/custom/{{ app_name }}"
+  topic_notify: "{{ awtrix_prefix }}/notify"
+  topic_dismiss: "{{ awtrix_prefix }}/notify/dismiss"
+  # Verbleibende Sekunden als String: Zahl, "0" oder "none" (kein Timer)
+  remaining: >
+    {% set nt = states(source_timer) %}
+    {% if nt not in ['unknown', 'unavailable', '', 'Kein Timer gestellt'] %}
+      {% set target = as_datetime(nt) %}
+      {% if target and target > now() %}
+        {{ (target - now()).total_seconds() | int }}
+      {% else %}
+        0
+      {% endif %}
+    {% else %}
+      none
+    {% endif %}
+  # Formatierter Countdown-Text (MM:SS oder H:MM:SS)
+  countdown_text: >
+    {% set s = remaining | int(0) %}
+    {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
+    {% if always_show_hours or h > 0 %}{{ '%d:%02d:%02d' | format(h, m, sec) }}{% else %}{{ '%02d:%02d' | format(m, sec) }}{% endif %}
+  # True NUR wenn der Timer wirklich abgelaufen ist: der vorherige Sensorwert
+  # war ein Zeitstempel, dessen Zeit jetzt erreicht ist. Verhindert Fehlalarme
+  # bei Sensor-Flackern (unavailable) oder beim Timer-Stellen/Abbrechen.
+  timer_expired: >
+    {% set ok = false %}
+    {% if trigger.id == 'source' and trigger.from_state is not none and remaining | int(-1) <= 0 %}
+      {% set frm = trigger.from_state.state %}
+      {% if frm not in ['unknown', 'unavailable', '', 'Kein Timer gestellt'] %}
+        {% set frm_dt = as_datetime(frm) %}
+        {% if frm_dt is not none and (now() - frm_dt).total_seconds() >= -2 %}
+          {% set ok = true %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+    {{ ok }}
+
+triggers:
+  - trigger: time_pattern
+    seconds: "/1"
+    id: tick
+  - trigger: state
+    entity_id: !input source_timer
+    id: source
+
+conditions: []
+
+actions:
+  - choose:
+      # ── Timer wirklich abgelaufen: Alarm + Anzeige aufräumen ────
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ (timer_expired | bool)
+                 or (alarm_on_zero and remaining | int(-1) == 0) }}
+        sequence:
+          # Angepinnten Countdown vorher entfernen
+          - if:
+              - condition: template
+                value_template: "{{ display_mode == 'pinned' }}"
+            then:
+              - action: mqtt.publish
+                data:
+                  topic: "{{ topic_dismiss }}"
+                  payload: ""
+          # Alarm anzeigen
+          - action: mqtt.publish
+            data:
+              topic: "{{ topic_notify }}"
+              payload: >-
+                {"text":"{{ alarm_text }}","color":{{ alarm_color | to_json }},"center":true,"duration":{{ alarm_duration }},"wakeup":true{% if alarm_blink %},"blinkText":700{% endif %}{% if alarm_effect not in ['none', '', None] %},"effect":"{{ alarm_effect }}"{% endif %}}
+          # Custom App entfernen (nur App-Modus)
+          - if:
+              - condition: template
+                value_template: "{{ display_mode == 'app' }}"
+            then:
+              - action: mqtt.publish
+                data:
+                  topic: "{{ topic_custom }}"
+                  payload: ""
+
+      # ── Timer läuft: Countdown anzeigen ─────────────────────────
+      - conditions:
+          - condition: template
+            value_template: "{{ remaining | int(-1) > 0 }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ display_mode == 'pinned' }}"
+            then:
+              # Angepinnt: gehaltene Notification, überdeckt andere Apps
+              - action: mqtt.publish
+                data:
+                  topic: "{{ topic_notify }}"
+                  payload: >-
+                    {"text":"{{ countdown_text }}","color":{{ countdown_color | to_json }},"pushIcon":0,"hold":true,"stack":false,"wakeup":true{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
+            else:
+              # Im App-Wechsel: Custom App
+              - action: mqtt.publish
+                data:
+                  topic: "{{ topic_custom }}"
+                  payload: >-
+                    {"text":"{{ countdown_text }}","color":{{ countdown_color | to_json }},"pushIcon":0,"duration":5{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
+
+      # ── Timer weg/abgebrochen (kein echtes Ablaufen): nur löschen ─
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'source' and remaining | int(-1) <= 0 }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ display_mode == 'pinned' }}"
+            then:
+              - action: mqtt.publish
+                data:
+                  topic: "{{ topic_dismiss }}"
+                  payload: ""
+            else:
+              - action: mqtt.publish
+                data:
+                  topic: "{{ topic_custom }}"
+                  payload: ""
+    # ── Idle-Tick ohne Timer: nichts tun (vermeidet MQTT-Spam) ────
+    default: []
