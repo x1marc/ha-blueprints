@@ -53,8 +53,7 @@ https://github.com/x1marc/ha-blueprints/blob/main/alexa_timer_awtrix.yaml
 > **Hinweis zur Quelle:** Alexa Media Player liefert Timer-Daten unzuverlässig
 > (das `active`-Attribut ist oft leer, abgelaufene Timer „kleben"). Diese
 > Blueprint nutzt deshalb ausschließlich den STATE des Sensors und merkt sich
-> die echte Zielzeit beim Start der Countdown-Schleife. Details siehe
-> [`CLAUDE.md`](CLAUDE.md).
+> die echte Zielzeit beim Start der Countdown-Schleife.
 
 ---
 
