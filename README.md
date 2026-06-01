@@ -55,3 +55,39 @@ https://github.com/x1marc/ha-blueprints/blob/main/alexa_timer_awtrix.yaml
 > Blueprint nutzt deshalb ausschließlich den STATE des Sensors und merkt sich
 > die echte Zielzeit beim Start der Countdown-Schleife. Details siehe
 > [`CLAUDE.md`](CLAUDE.md).
+
+---
+
+## 🌱 Bodenfeuchte Alarm System
+
+Überwacht einen Bodenfeuchte-Sensor und benachrichtigt zuverlässig, sobald eine
+Pflanze Wasser braucht – und wieder, wenn sie versorgt ist. Optional gießt sie
+automatisch. Alles über Einstellungen konfigurierbar, kein Code nötig.
+
+**Funktionen**
+
+- **Trocken-Alarm** mit Grenzwert, Hysterese, Verzögerung und Cooldown-Schutz
+  (keine Fehlalarme bei schwankendem Sensor, z. B. direkt nach dem Gießen)
+- **OK-Rückmeldung** („Alles gut") automatisch, wenn die Feuchte wieder stabil ist
+- **Benachrichtigungskanäle** einzeln schaltbar: 📱 Mobile App (mehrere Geräte),
+  📋 anhaltende HA-Benachrichtigung, 🔊 Alexa-Durchsage (mit Lautstärkesteuerung)
+- **Anwesenheitserkennung** – Alexa-Durchsagen nur, wenn jemand zuhause ist
+- **Nachtmodus** pro Kanal (funktioniert auch über Mitternacht)
+- **Urlaubs-/Pause-Modus** per Schalter – alle Alarme temporär stumm
+- **Automatisches Gießen** – Pumpe/Ventil mit einstellbarer Laufzeit und
+  Sicherheitsabschaltung; optional zeitplanbasiertes präventives Gießen
+
+**Voraussetzungen**
+
+- Ein Bodenfeuchte-Sensor (`sensor.*` in %)
+- Optional: Pumpe/Ventil als `switch.*`, Mobile-App-Benachrichtigung, Alexa
+  (für Durchsagen)
+
+**Import**
+
+```
+https://github.com/x1marc/ha-blueprints/blob/main/Bodenfeuchte.yaml
+```
+
+Die Blueprint hat zusätzlich ein eigenständiges Repo:
+[x1marc/Bodenfeuchte-Alarm-System](https://github.com/x1marc/Bodenfeuchte-Alarm-System).
