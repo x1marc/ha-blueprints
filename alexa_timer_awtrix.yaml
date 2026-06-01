@@ -1,5 +1,5 @@
 blueprint:
-  name: Alexa Timer → AWTRIX 3 (v1.9)
+  name: Alexa Timer → AWTRIX 3 (v2.0)
   description: >
     Zeigt den nächsten Alexa-Timer als Live-Countdown auf einem AWTRIX-3-Display
     (Ulanzi / awtrix-light) an und löst beim Ablauf einen Alarm aus.
@@ -36,6 +36,10 @@ blueprint:
                             unavailable/Müll) -> AWTRIX-Anzeige löschen.
 
     Changelog:
+      v2.0 - Pinned-Modus-Fix: Der Alarm sendet jetzt "stack":false und ERSETZT
+             damit die gehaltene Countdown-Notification. Vorher stapelte sich der
+             Alarm dahinter und wurde nie sichtbar (LOS blitzte erst beim Beenden
+             des Timers kurz auf). LOS erscheint nun sofort bei 00:00.
       v1.9 - Zielzeit wird jetzt per "variables"-Schritt fest eingefroren
              (locked_target). Behebt, dass die Schleife bei 00:00 "klebte" und
              LOS erst beim Beenden des Timers kam (die gemerkte Zielzeit wurde
@@ -333,7 +337,7 @@ actions:
                     data:
                       topic: "{{ topic_notify }}"
                       payload: >-
-                        {"text":"{{ alarm_text }}","color":{{ alarm_color | to_json }},"center":true,"duration":{{ alarm_duration }},"wakeup":true{% if alarm_blink %},"blinkText":700{% endif %}{% if alarm_effect not in ['none', '', None] %},"effect":"{{ alarm_effect }}"{% endif %}}
+                        {"text":"{{ alarm_text }}","color":{{ alarm_color | to_json }},"center":true,"stack":false,"duration":{{ alarm_duration }},"wakeup":true{% if alarm_blink %},"blinkText":700{% endif %}{% if alarm_effect not in ['none', '', None] %},"effect":"{{ alarm_effect }}"{% endif %}}
                   # Countdown-App entfernen (LOS ist eine eigene Notification)
                   - if:
                       - condition: template
