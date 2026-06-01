@@ -135,6 +135,7 @@ Das Timer-Datenmodell von AMP ist unzuverlässig — **darauf gründet das gesam
 | Blueprint lädt nicht: „expected str … Got None" | `select`-Optionen mischten Strings und `{label,value}` | alle Optionen einheitlich als `{label,value}` |
 | Effekt wirkte nicht wie beschrieben | freies Textfeld + fest verdrahtete `effectSettings`/`palette` | `select`-Dropdown gültiger Effektnamen; nur `"effect"` senden |
 | Zeitzonen-Verschiebung im Countdown | `as_datetime`-Vergleich, `timestamp_custom` | in UTC-Epoch (`.timestamp()`) rechnen |
+| Pinned-Modus: LOS unsichtbar, blitzt erst beim Timer-Aus | Alarm-Notification stapelte sich hinter der gehaltenen Countdown-Notification (`hold:true`) und kam nie nach vorne | Alarm-Payload mit `"stack":false` → ersetzt die gehaltene Notification statt sich anzustellen |
 
 **Pinned-Modus-Vorbehalt:** Beim regulären Ablauf ersetzt der LOS-Alarm den gehaltenen Countdown automatisch (`stack:false`). Meldet Alexa den Timer danach als entfernt, kann der `dismiss`-Pfad den LOS im Pinned-Modus verkürzen. Im `app`-Modus bleibt der LOS (eigene Notification) erhalten, nur die Countdown-App wird entfernt.
 
