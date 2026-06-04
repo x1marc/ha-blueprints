@@ -1,0 +1,62 @@
+blueprint:
+  name: AWTRIX Overlay bei Wettercode (OpenWeatherMap)
+  description: >
+    Sendet automatisch das passende Overlay an AWTRIX, wenn sich der
+    OpenWeatherMap Wettercode ändert.
+    Unterstützte Overlays: clear, drizzle, rain, storm, snow, thunder, frost
+  domain: automation
+  source_url: https://github.com/x1marc/ha-blueprints/blob/main/overlay_weatherV1.yaml
+  input:
+    weather_code_sensor:
+      name: Wettercode-Sensor
+      description: Sensor mit dem OpenWeatherMap Wettercode (z. B. sensor.openweathermap_weather_code)
+      selector:
+        entity:
+          domain: sensor
+    awtrix_topic:
+      name: MQTT Topic
+      description: >
+        MQTT Topic deiner AWTRIX für Settings (z. B. awtrix/settings).
+        Das Overlay wird über den OVERLAY-Key in den Settings gesetzt.
+      default: "awtrix/settings"
+
+trigger:
+  - platform: state
+    entity_id: !input weather_code_sensor
+
+variables:
+  code: "{{ trigger.to_state.state | int(default=800) }}"
+  overlay: >
+    {% set c = code %}
+    {# 2xx – Gewitter #}
+    {% if c in [200, 201, 202, 210, 211, 212, 221, 230, 231, 232] %}
+      thunder
+    {# 3xx – Nieselregen / Sprühregen #}
+    {% elif c in [300, 301, 302, 310, 311, 312, 313, 314, 321] %}
+      drizzle
+    {# 5xx – Regen; 502–504 und 522 = Starkregen → storm #}
+    {% elif c in [502, 503, 504, 522] %}
+      storm
+    {% elif c in [500, 501, 511, 520, 521, 531] %}
+      rain
+    {# 6xx – Schnee / Schneeregen / Eisregen #}
+    {% elif c in [600, 601, 602, 611, 612, 613, 615, 616, 620, 621, 622] %}
+      snow
+    {# 7xx – Atmosphäre (Nebel, Dunst, Sand, Asche, Sturm, Tornado) #}
+    {# 781 = Tornado → storm; 771 = Böen → storm; Rest → frost (Sichtbehinderung) #}
+    {% elif c in [771, 781] %}
+      storm
+    {% elif c in [701, 711, 721, 731, 741, 751, 761, 762] %}
+      frost
+    {# 800 = klarer Himmel, 801–804 = bewölkt → clear #}
+    {% else %}
+      clear
+    {% endif %}
+
+action:
+  - service: mqtt.publish
+    data:
+      topic: !input awtrix_topic
+      payload: "{{ {'OVERLAY': overlay | trim} | tojson }}"
+
+mode: single
