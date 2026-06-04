@@ -110,9 +110,6 @@ Mobile-App-Benachrichtigung, Alexa
 https://github.com/x1marc/ha-blueprints/blob/main/Bodenfeuchte.yaml
 ```
 
-Eigenständiges Repo: [x1marc/Bodenfeuchte-Alarm-System](https://github.com/x1marc/Bodenfeuchte-Alarm-System)
-
----
 
 ## Installation & Updates
 
