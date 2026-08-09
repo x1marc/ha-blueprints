@@ -1,75 +1,41 @@
 blueprint:
-  name: Alexa Timer → AWTRIX 3 (v2.0)
+  name: Alexa Timer → AWTRIX (v3.0)
   description: >
-    Zeigt den nächsten Alexa-Timer als Live-Countdown auf einem AWTRIX-3-Display
-    (Ulanzi / awtrix-light) an und löst beim Ablauf einen Alarm aus.
+    Zeigt den nächsten Alexa-Timer als Live-Countdown auf einer oder mehreren
+    AWTRIX-Uhren an und löst beim Ablauf einen Alarm aus (Standard `!!!LOS!!!`).
 
-    Ersetzt den alten Aufbau aus 2 Template-Sensoren + 4 Automationen durch
-    EINE einzige Automation:
+    Unterstützt BEIDE Firmwares gleichzeitig und beliebig viele Geräte:
+      • AWTRIX 3  (awtrix-light) – Topics: <prefix>/notify, <prefix>/custom/<app>
+      • AWTRIX NG (blueforcer/awtrix-ng) – Topics: <prefix>/cmd/notify,
+        <prefix>/cmd/apps/pushed/<app>
 
-      • Der Countdown wird inline aus dem STATE des Alexa-Timer-Sensors berechnet
-        (kein separater Template-Sensor, kein homeassistant.update_entity-Loop,
-        kein Helfer).
-      • Sekundengenaue Aktualisierung in einer Schleife, die NUR während eines
-        laufenden Timers läuft. KEIN Sekunden-Trigger -> im Leerlauf null Last.
-      • Beim Ablauf wird ein Alarm über .../notify gesendet.
+    Du trägst die Topic-Prefixe deiner Geräte in die passende Liste ein
+    ("AWTRIX 3 Geräte" bzw. "AWTRIX NG Geräte") – damit ist die Firmware pro
+    Gerät gewählt. Beide Listen können gleichzeitig gefüllt sein.
 
-    Anzeige-Modus (wählbar):
-      • "Im App-Wechsel": Custom App (Topic .../custom/<name>) — rotiert mit den
-        übrigen AWTRIX-Apps im Loop. Flackerfrei, firmware-native für Live-Werte.
-      • "Nur Timer anpinnen": gehaltene Notification (hold:true) — überdeckt alle
-        anderen Apps, bis der Timer endet. Kein App-Wechsel.
+    Aufbau: EINE Automation, kein separater Sensor, kein Helfer.
+      • Countdown läuft in einer Schleife NUR während eines aktiven Timers ->
+        im Leerlauf null Systemlast (kein Sekunden-Trigger).
+      • Alarm wird AUSSCHLIESSLICH beim Erreichen der Zielzeit ausgelöst ->
+        kein Fehlalarm beim Stellen/Abbrechen.
+      • Abbruch auf Alexa -> Anzeige wird auf allen Geräten gelöscht.
 
-    Voraussetzungen:
-      • MQTT-Integration aktiv und AWTRIX per MQTT verbunden.
-      • Quelle ist der "next timer"-Sensor von Alexa Media Player (HACS),
-        z. B. sensor.alexa_wohnzimmer_next_timer. Bei laufendem Timer steht im
-        STATE die Zielzeit (ISO-Zeitstempel in der Zukunft); ohne Timer ein
-        unbrauchbarer Wert (~jetzt) — der wird ignoriert.
+    Anzeige-Modus (für alle Geräte):
+      • "Im App-Wechsel": Custom/Pushed App, rotiert mit den übrigen Apps.
+      • "Nur Timer anpinnen": gehaltene Notification (hold), überdeckt andere Apps.
 
-    Funktionsweise (einfach wie im Original):
-      • "Timer läuft"     = STATE in der Zukunft -> Countdown-Schleife.
-      • "Zeit erreicht"   = Schleife läuft bis zur Zielzeit -> Alarm. Der Alarm
-                            kommt AUSSCHLIESSLICH vom Erreichen der Zielzeit,
-                            daher NIE ein Fehlalarm beim Stellen/Abbrechen.
-      • "Kein Timer mehr" = Sensor zeigt keinen Zukunfts-Timer (Abbruch ->
-                            unavailable/Müll) -> AWTRIX-Anzeige löschen.
+    Voraussetzungen: MQTT-Integration aktiv; AWTRIX-Uhren per MQTT verbunden;
+    Alexa Media Player (HACS) für den *_next_timer-Sensor.
 
     Changelog:
-      v2.0 - Pinned-Modus-Fix: Der Alarm sendet jetzt "stack":false und ERSETZT
-             damit die gehaltene Countdown-Notification. Vorher stapelte sich der
-             Alarm dahinter und wurde nie sichtbar (LOS blitzte erst beim Beenden
-             des Timers kurz auf). LOS erscheint nun sofort bei 00:00.
-      v1.9 - Zielzeit wird jetzt per "variables"-Schritt fest eingefroren
-             (locked_target). Behebt, dass die Schleife bei 00:00 "klebte" und
-             LOS erst beim Beenden des Timers kam (die gemerkte Zielzeit wurde
-             im Schleifen-Kontext faktisch live neu berechnet).
-      v1.8 - LOS kommt jetzt PÜNKTLICH bei 00:00: Zielzeit wird beim Start
-             gemerkt (target_epoch) und der Alarm exakt bei Erreichen ausgelöst.
-             Behebt das "klebt bei 00:00 bis Timer-Aus": beim Klingeln bleibt der
-             Alexa-Sensor auf ~jetzt stehen, was die alte Live-Berechnung
-             blockierte. mode: single (statt restart), damit der Zustandswechsel
-             im Ablauf-Moment die Schleife nicht abbricht; Abbruch wird in der
-             Schleife selbst erkannt. Alarm bleibt stehen, bis der Timer auf
-             Alexa beendet wird (-> unavailable -> löschen).
-      v1.7 - Vereinfacht (wie das funktionierende Original): Alarm NUR beim
-             Erreichen der Zielzeit (Schleifenende). Abbruch-Erkennung ersetzt
-             durch simples "kein laufender Timer -> Anzeige löschen" -> behebt
-             das Nicht-Löschen beim Abbrechen. from_state-Raterei entfernt.
-      v1.6 - Sekunden-Trigger entfernt -> keine Dauerlast im Leerlauf. Countdown
-             läuft in einer Schleife nur während eines aktiven Timers; getriggert
-             nur bei Zustandsänderung des Sensors + HA-Start.
-      v1.5 - Zurück zur einfachen State-Quelle OHNE Helfer/Attribute. Ablauf wird
-             beim State-Wechsel erkannt, wenn die vorherige Zielzeit im engen
-             Fenster (−2…+5 s) erreicht wurde. Behebt "sofort LOS": alter Müll
-             und das Timer-Stellen liegen außerhalb des Fensters.
-      v1.4 - (verworfen) Attribut active[].triggerTime — bei AMP oft leer/None.
-      v1.3 - (verworfen) zeitbasiert, scheiterte an unzuverlässigem State.
-      v1.2 - Fehlalarm-Fix (unvollständig): from_state ohne obere Fenstergrenze.
-      v1.1 - Anzeige-Modus "Nur Timer anpinnen"; Farbrad (color_rgb); Alarm-Effekt
-             als Dropdown; Blinken des Alarm-Textes optional.
-      v1.0 - Erstausgabe: ein Sensor + eine Automation statt 2 Sensoren + 4
-             Automationen.
+      v3.0 - Multi-Device + AWTRIX NG: zwei Geräte-Listen (AWTRIX 3 / AWTRIX NG),
+             beliebig viele Geräte, firmware-spezifische Topics & Payloads. Die
+             bewährte Countdown-/Alarm-Logik (locked_target, mode: single) bleibt.
+      v2.0 - Pinned-Fix: Alarm sendet "stack":false und ersetzt den gehaltenen
+             Countdown, statt sich dahinter zu stapeln.
+      v1.9 - Zielzeit per "variables"-Schritt eingefroren (locked_target).
+      v1.6 - Sekunden-Trigger entfernt -> keine Leerlauf-Last.
+      v1.0 - Erstausgabe (eine Automation statt 2 Sensoren + 4 Automationen).
 
   domain: automation
   source_url: https://github.com/x1marc/ha-blueprints/blob/main/alexa_timer_awtrix.yaml
@@ -86,22 +52,35 @@ blueprint:
           filter:
             - domain: sensor
 
-    # ─── 📟 AWTRIX ────────────────────────────────────────────────
-    awtrix_prefix:
-      name: AWTRIX MQTT-Topic-Präfix
+    # ─── 📟 AWTRIX-GERÄTE ─────────────────────────────────────────
+    awtrix3_prefixes:
+      name: "AWTRIX 3 Geräte (Topic-Prefixe)"
       description: >
-        Das Topic-Präfix des Geräts (steht in den AWTRIX-Geräteeinstellungen,
-        Standard: "awtrix"). Es wird "/custom/<App>", "/notify" bzw.
-        "/notify/dismiss" angehängt.
-      default: "awtrix"
+        MQTT-Topic-Prefixe deiner AWTRIX-3-Geräte (awtrix-light), z. B. "awtrix".
+        Mehrere möglich (eins pro Zeile). Leer lassen, wenn du keine AWTRIX-3-
+        Geräte hast.
+      default: ["awtrix"]
       selector:
-        text: {}
+        text:
+          multiple: true
+
+    awtrixng_prefixes:
+      name: "AWTRIX NG Geräte (Topic-Prefixe)"
+      description: >
+        MQTT-Topic-Prefixe deiner AWTRIX-NG-Geräte, z. B. "awtrixNG". Steht der
+        Prefix leer, nutzt NG die 12-stellige MAC. Mehrere möglich. Leer lassen,
+        wenn du keine AWTRIX-NG-Geräte hast.
+      default: []
+      selector:
+        text:
+          multiple: true
 
     app_name:
-      name: Name der Custom App
+      name: Name der App
       description: >
-        Interner Name der AWTRIX-App für den Countdown (Topic .../custom/<Name>).
-        Nur im Modus "Im App-Wechsel" relevant.
+        Interner App-Name für den Countdown im Modus "Im App-Wechsel"
+        (AWTRIX 3: .../custom/<Name>, AWTRIX NG: .../cmd/apps/pushed/<Name>).
+        Nur A-Z, a-z, 0-9, _ und - (max. 32 Zeichen, NG-Vorgabe).
       default: "alexatimer"
       selector:
         text: {}
@@ -110,9 +89,8 @@ blueprint:
     display_mode:
       name: Anzeige-Modus
       description: >
-        "Im App-Wechsel": Timer rotiert als App mit den übrigen AWTRIX-Apps.
-        "Nur Timer anpinnen": Timer wird gehalten und überdeckt alle anderen
-        Apps, bis er abläuft (kein App-Wechsel).
+        "Im App-Wechsel": Timer rotiert als App mit den übrigen Apps.
+        "Nur Timer anpinnen": Timer wird gehalten und überdeckt andere Apps.
       default: app
       selector:
         select:
@@ -132,16 +110,14 @@ blueprint:
 
     countdown_icon:
       name: Icon (optional)
-      description: >
-        AWTRIX-Icon-ID für die Countdown-Anzeige (leer = kein Icon).
+      description: AWTRIX-Icon-ID für den Countdown (leer = kein Icon).
       default: ""
       selector:
         text: {}
 
     always_show_hours:
       name: Stunden immer anzeigen
-      description: >
-        Aus = HH nur anzeigen, wenn > 0 (sonst MM:SS). An = immer H:MM:SS.
+      description: Aus = HH nur bei > 0 (sonst MM:SS). An = immer H:MM:SS.
       default: false
       selector:
         boolean: {}
@@ -149,7 +125,7 @@ blueprint:
     # ─── 🔔 ALARM ─────────────────────────────────────────────────
     alarm_text:
       name: Alarm-Text
-      description: Text, der beim Ablauf des Timers angezeigt wird.
+      description: Text beim Ablauf des Timers.
       default: "!!!LOS!!!"
       selector:
         text: {}
@@ -163,9 +139,6 @@ blueprint:
 
     alarm_blink:
       name: Alarm-Text blinken
-      description: >
-        An = der Alarm-Text blinkt. Aus = der Text steht still (besser lesbar,
-        vor allem in Kombination mit einem Hintergrundeffekt).
       default: true
       selector:
         boolean: {}
@@ -183,9 +156,8 @@ blueprint:
     alarm_effect:
       name: Alarm-Effekt
       description: >
-        AWTRIX-Hintergrundeffekt für den Alarm. "Kein Effekt" zeigt nur Text +
-        Farbe. Die Auswahl enthält die gültigen Effektnamen der AWTRIX-3-Firmware
-        (awtrix-light) — so sind Tippfehler ausgeschlossen.
+        Hintergrundeffekt für den Alarm. "Kein Effekt" = nur Text + Farbe.
+        Gilt für beide Firmwares (Effektnamen sind bei AWTRIX 3 und NG gleich).
       default: "PlasmaCloud"
       selector:
         select:
@@ -236,7 +208,8 @@ max_exceeded: silent
 
 variables:
   source_timer: !input source_timer
-  awtrix_prefix: !input awtrix_prefix
+  awtrix3_prefixes: !input awtrix3_prefixes
+  awtrixng_prefixes: !input awtrixng_prefixes
   app_name: !input app_name
   display_mode: !input display_mode
   countdown_color: !input countdown_color
@@ -247,13 +220,7 @@ variables:
   alarm_blink: !input alarm_blink
   alarm_duration: !input alarm_duration
   alarm_effect: !input alarm_effect
-  topic_custom: "{{ awtrix_prefix }}/custom/{{ app_name }}"
-  topic_notify: "{{ awtrix_prefix }}/notify"
-  topic_dismiss: "{{ awtrix_prefix }}/notify/dismiss"
-  # Zielzeit des Timers als Unix-Zeit (beim Trigger gemerkt!). 0 = Sensor zeigt
-  # keinen Zeitstempel (unavailable/kein Timer). Beim Ablauf "klebt" der Alexa-
-  # Sensor auf ~jetzt; deshalb merken wir die echte Zielzeit beim Start der
-  # Schleife und lösen exakt dann den Alarm aus.
+  # Zielzeit des Timers als Unix-Zeit (0 = kein verwertbarer Zeitstempel).
   target_epoch: >
     {% set nt = states(source_timer) %}
     {% if nt not in ['unknown', 'unavailable', '', 'Kein Timer gestellt'] %}
@@ -262,19 +229,21 @@ variables:
     {% else %}
       0
     {% endif %}
-  # Echter laufender Timer? Zielzeit liegt > 2 s in der Zukunft (verhindert, dass
-  # der "klebende" ~jetzt-Wert beim Klingeln erneut als Countdown startet).
+  # Läuft ein echter Timer? Zielzeit > 2 s in der Zukunft.
   counting: "{{ (target_epoch | float(0)) > 0 and (target_epoch | float(0)) - now().timestamp() > 2 }}"
-  # Sensor zeigt gar keinen Zeitstempel (z. B. unavailable nach Abbruch/Dismiss).
+  # Kein Zeitstempel im Sensor (unavailable/kein Timer).
   no_timer: "{{ (target_epoch | float(0)) == 0 }}"
+  # Statische Alarm-Payloads je Firmware (Farbe als [r,g,b] – beide akzeptieren das).
+  alarm_payload_v3: >-
+    {"text":"{{ alarm_text }}","color":{{ alarm_color | to_json }},"center":true,"stack":false,"duration":{{ alarm_duration | int }},"wakeup":true{% if alarm_blink %},"blinkText":700{% endif %}{% if alarm_effect not in ['none', '', None] %},"effect":"{{ alarm_effect }}"{% endif %}}
+  alarm_payload_ng: >-
+    {"text":"{{ alarm_text }}","textColor":{{ alarm_color | to_json }},"textCenter":true,"stack":false,"durationMs":{{ (alarm_duration | int) * 1000 }},"wakeup":true{% if alarm_blink %},"textBlinkMs":700{% endif %}{% if alarm_effect not in ['none', '', None] %},"effect":"{{ alarm_effect }}"{% endif %}}
 
 triggers:
-  # Nur bei Zustandsänderung des Alexa-Sensors (Timer gestellt/abgelaufen/
-  # abgebrochen). KEIN Sekunden-Trigger -> im Leerlauf keine Last.
+  # Nur bei Zustandsänderung des Alexa-Sensors – kein Sekunden-Trigger.
   - trigger: state
     entity_id: !input source_timer
     id: source
-  # Nach HA-Neustart laufenden Timer wieder anzeigen.
   - trigger: homeassistant
     event: start
     id: hastart
@@ -283,86 +252,111 @@ conditions: []
 
 actions:
   - choose:
-      # ── Timer läuft: Countdown-Schleife (mode: single, nur 1×) ──────
-      # Die Schleife nutzt die GEMERKTE Zielzeit (target_epoch). Sie endet, wenn
-      # die Zielzeit erreicht ist ODER der Sensor keinen Timer mehr zeigt
-      # (Abbruch). Danach wird je nach Grund Alarm gezeigt oder gelöscht.
+      # ── Timer läuft: Countdown-Schleife (mode: single, 1×) ──────
       - conditions:
           - condition: template
             value_template: "{{ counting | bool }}"
         sequence:
-          # Zielzeit EINMAL einfrieren (als Zahl gespeichert, ändert sich nicht).
+          # Zielzeit EINMAL einfrieren (Zahl, ändert sich nicht).
           - variables:
               locked_target: "{{ target_epoch | float(0) }}"
           - repeat:
               while:
-                # Zielzeit noch nicht erreicht ...
                 - condition: template
                   value_template: "{{ locked_target - now().timestamp() > 0 }}"
-                # ... UND der Timer wurde nicht abgebrochen (Sensor noch gültig).
                 - condition: template
                   value_template: "{{ states(source_timer) not in ['unavailable', 'unknown', '', 'Kein Timer gestellt'] }}"
               sequence:
-                - if:
-                    - condition: template
-                      value_template: "{{ display_mode == 'pinned' }}"
-                  then:
-                    # Angepinnt: gehaltene Notification, überdeckt andere Apps
-                    - action: mqtt.publish
-                      data:
-                        topic: "{{ topic_notify }}"
-                        payload: >-
-                          {% set s = [locked_target - now().timestamp(), 0] | max | int %}
-                          {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
-                          {% set txt = ('%d:%02d:%02d' | format(h, m, sec)) if (always_show_hours or h > 0) else ('%02d:%02d' | format(m, sec)) %}
-                          {"text":"{{ txt }}","color":{{ countdown_color | to_json }},"pushIcon":0,"hold":true,"stack":false,"wakeup":true{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
-                  else:
-                    # Im App-Wechsel: Custom App
-                    - action: mqtt.publish
-                      data:
-                        topic: "{{ topic_custom }}"
-                        payload: >-
-                          {% set s = [locked_target - now().timestamp(), 0] | max | int %}
-                          {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
-                          {% set txt = ('%d:%02d:%02d' | format(h, m, sec)) if (always_show_hours or h > 0) else ('%02d:%02d' | format(m, sec)) %}
-                          {"text":"{{ txt }}","color":{{ countdown_color | to_json }},"pushIcon":0,"duration":5{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}
+                # Countdown-Text 1× je Sekunde berechnen ...
+                - variables:
+                    cd_txt: >
+                      {% set s = [locked_target - now().timestamp(), 0] | max | int %}
+                      {% set h = s // 3600 %}{% set m = (s % 3600) // 60 %}{% set sec = s % 60 %}
+                      {% if always_show_hours or h > 0 %}{{ '%d:%02d:%02d' | format(h, m, sec) }}{% else %}{{ '%02d:%02d' | format(m, sec) }}{% endif %}
+                # ... und an alle AWTRIX-3-Geräte senden
+                - repeat:
+                    for_each: "{{ awtrix3_prefixes }}"
+                    sequence:
+                      - action: mqtt.publish
+                        data:
+                          topic: "{{ repeat.item }}/{{ 'notify' if display_mode == 'pinned' else 'custom/' ~ app_name }}"
+                          payload: >-
+                            {% if display_mode == 'pinned' %}{"text":"{{ cd_txt }}","color":{{ countdown_color | to_json }},"pushIcon":0,"hold":true,"stack":false,"wakeup":true{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}{% else %}{"text":"{{ cd_txt }}","color":{{ countdown_color | to_json }},"pushIcon":0,"duration":5{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}{% endif %}
+                # ... und an alle AWTRIX-NG-Geräte
+                - repeat:
+                    for_each: "{{ awtrixng_prefixes }}"
+                    sequence:
+                      - action: mqtt.publish
+                        data:
+                          topic: "{{ repeat.item }}/cmd/{{ 'notify' if display_mode == 'pinned' else 'apps/pushed/' ~ app_name }}"
+                          payload: >-
+                            {% if display_mode == 'pinned' %}{"text":"{{ cd_txt }}","textColor":{{ countdown_color | to_json }},"iconMode":"fixed","hold":true,"stack":false,"wakeup":true{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}{% else %}{"text":"{{ cd_txt }}","textColor":{{ countdown_color | to_json }},"lifetimeMs":5000{% if countdown_icon %},"icon":"{{ countdown_icon }}"{% endif %}}{% endif %}
                 - delay: "00:00:01"
+          # Schleife beendet:
           - choose:
-              # Zielzeit erreicht -> regulärer Ablauf -> Alarm
+              # Zielzeit erreicht -> regulärer Ablauf -> Alarm auf allen Geräten
               - conditions:
                   - condition: template
                     value_template: "{{ locked_target - now().timestamp() <= 0 }}"
                 sequence:
-                  - action: mqtt.publish
-                    data:
-                      topic: "{{ topic_notify }}"
-                      payload: >-
-                        {"text":"{{ alarm_text }}","color":{{ alarm_color | to_json }},"center":true,"stack":false,"duration":{{ alarm_duration }},"wakeup":true{% if alarm_blink %},"blinkText":700{% endif %}{% if alarm_effect not in ['none', '', None] %},"effect":"{{ alarm_effect }}"{% endif %}}
-                  # Countdown-App entfernen (LOS ist eine eigene Notification)
+                  - repeat:
+                      for_each: "{{ awtrix3_prefixes }}"
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: "{{ repeat.item }}/notify"
+                            payload: "{{ alarm_payload_v3 }}"
+                  - repeat:
+                      for_each: "{{ awtrixng_prefixes }}"
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: "{{ repeat.item }}/cmd/notify"
+                            payload: "{{ alarm_payload_ng }}"
+                  # Im App-Modus die Countdown-App entfernen (LOS ist Notification)
                   - if:
                       - condition: template
                         value_template: "{{ display_mode == 'app' }}"
                     then:
-                      - action: mqtt.publish
-                        data:
-                          topic: "{{ topic_custom }}"
-                          payload: ""
-            # Schleife endete vorzeitig (Timer abgebrochen) -> Anzeige löschen
+                      - repeat:
+                          for_each: "{{ awtrix3_prefixes }}"
+                          sequence:
+                            - action: mqtt.publish
+                              data: { topic: "{{ repeat.item }}/custom/{{ app_name }}", payload: "" }
+                      - repeat:
+                          for_each: "{{ awtrixng_prefixes }}"
+                          sequence:
+                            - action: mqtt.publish
+                              data: { topic: "{{ repeat.item }}/cmd/apps/pushed/{{ app_name }}", payload: "" }
+            # Schleife vorzeitig beendet (Timer abgebrochen) -> Anzeige löschen
             default:
               - if:
                   - condition: template
                     value_template: "{{ display_mode == 'pinned' }}"
                 then:
-                  - action: mqtt.publish
-                    data: { topic: "{{ topic_dismiss }}", payload: "" }
+                  - repeat:
+                      for_each: "{{ awtrix3_prefixes }}"
+                      sequence:
+                        - action: mqtt.publish
+                          data: { topic: "{{ repeat.item }}/notify/dismiss", payload: "" }
+                  - repeat:
+                      for_each: "{{ awtrixng_prefixes }}"
+                      sequence:
+                        - action: mqtt.publish
+                          data: { topic: "{{ repeat.item }}/cmd/notify/dismiss", payload: "" }
                 else:
-                  - action: mqtt.publish
-                    data: { topic: "{{ topic_custom }}", payload: "" }
+                  - repeat:
+                      for_each: "{{ awtrix3_prefixes }}"
+                      sequence:
+                        - action: mqtt.publish
+                          data: { topic: "{{ repeat.item }}/custom/{{ app_name }}", payload: "" }
+                  - repeat:
+                      for_each: "{{ awtrixng_prefixes }}"
+                      sequence:
+                        - action: mqtt.publish
+                          data: { topic: "{{ repeat.item }}/cmd/apps/pushed/{{ app_name }}", payload: "" }
 
-      # ── Sensor zeigt keinen Timer (z. B. unavailable nach Dismiss): löschen ─
-      # Während des Klingelns "klebt" der Sensor auf ~jetzt (kein 0-Wert) -> dieser
-      # Zweig greift NICHT, der Alarm bleibt also stehen, bis der Timer auf Alexa
-      # beendet wird (dann -> unavailable -> hier gelöscht).
+      # ── Sensor zeigt keinen Timer (Abbruch/Dismiss): löschen ────
       - conditions:
           - condition: template
             value_template: "{{ no_timer | bool }}"
@@ -371,9 +365,25 @@ actions:
               - condition: template
                 value_template: "{{ display_mode == 'pinned' }}"
             then:
-              - action: mqtt.publish
-                data: { topic: "{{ topic_dismiss }}", payload: "" }
+              - repeat:
+                  for_each: "{{ awtrix3_prefixes }}"
+                  sequence:
+                    - action: mqtt.publish
+                      data: { topic: "{{ repeat.item }}/notify/dismiss", payload: "" }
+              - repeat:
+                  for_each: "{{ awtrixng_prefixes }}"
+                  sequence:
+                    - action: mqtt.publish
+                      data: { topic: "{{ repeat.item }}/cmd/notify/dismiss", payload: "" }
             else:
-              - action: mqtt.publish
-                data: { topic: "{{ topic_custom }}", payload: "" }
+              - repeat:
+                  for_each: "{{ awtrix3_prefixes }}"
+                  sequence:
+                    - action: mqtt.publish
+                      data: { topic: "{{ repeat.item }}/custom/{{ app_name }}", payload: "" }
+              - repeat:
+                  for_each: "{{ awtrixng_prefixes }}"
+                  sequence:
+                    - action: mqtt.publish
+                      data: { topic: "{{ repeat.item }}/cmd/apps/pushed/{{ app_name }}", payload: "" }
     default: []

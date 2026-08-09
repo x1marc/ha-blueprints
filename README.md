@@ -7,41 +7,47 @@ manuell per URL.
 
 ## Inhaltsverzeichnis
 
-- [Alexa Timer → AWTRIX 3](#alexa-timer--awtrix-3)
+- [Alexa Timer → AWTRIX 3 & NG](#alexa-timer--awtrix-3--ng)
 - [AWTRIX Wetter-Overlay (OpenWeatherMap)](#awtrix-wetter-overlay-openweathermap)
 - [Bodenfeuchte Alarm System](#bodenfeuchte-alarm-system)
 - [Installation & Updates](#installation--updates)
 
 | Blueprint | Kurzbeschreibung |
 |---|---|
-| [🔔 Alexa Timer → AWTRIX 3](#alexa-timer--awtrix-3) | Alexa-Timer als Live-Countdown auf dem AWTRIX-Display + Alarm bei Ablauf |
+| [🔔 Alexa Timer → AWTRIX 3 & NG](#alexa-timer--awtrix-3--ng) | Alexa-Timer als Live-Countdown auf mehreren AWTRIX-Uhren (Firmware 3 **und** NG) + Alarm bei Ablauf |
 | [🌦️ AWTRIX Wetter-Overlay](#awtrix-wetter-overlay-openweathermap) | Setzt passend zum Wetter ein AWTRIX-Overlay (Regen, Schnee, Gewitter …) |
 | [🌱 Bodenfeuchte Alarm System](#bodenfeuchte-alarm-system) | Trocken-Alarm, Auto-Gießen und Multi-Channel-Benachrichtigung für Pflanzen |
 
 ---
 
-## Alexa Timer → AWTRIX 3
+## Alexa Timer → AWTRIX 3 & NG
 
 **Datei:** `alexa_timer_awtrix.yaml`
 
-Zeigt den nächsten Alexa-Timer als Live-Countdown auf einem AWTRIX-3-Display
-(Ulanzi / awtrix-light) an und löst beim Ablauf einen Alarm aus (Standard
-`!!!LOS!!!`). Ersetzt den klassischen Aufbau aus mehreren Template-Sensoren +
-Automationen durch **eine einzige Automation** – ohne separaten Sensor, ohne
-Helfer.
+Zeigt den nächsten Alexa-Timer als Live-Countdown auf **einer oder mehreren**
+AWTRIX-Uhren an und löst beim Ablauf einen Alarm aus (Standard `!!!LOS!!!`).
+Unterstützt **beide Firmwares gleichzeitig** – [AWTRIX 3 / awtrix-light](https://blueforcer.github.io/awtrix3/)
+und [AWTRIX NG](https://blueforcer.github.io/awtrix-ng/). Ersetzt den klassischen
+Aufbau aus mehreren Template-Sensoren + Automationen durch **eine einzige
+Automation** – ohne separaten Sensor, ohne Helfer.
 
 **Funktionen**
 
+- **Mehrere Geräte & beide Firmwares:** je eine Liste für „AWTRIX 3 Geräte" und
+  „AWTRIX NG Geräte" – beliebig viele, beliebig gemischt. Die Firmware wählst du
+  durch die Liste, in die du das Gerät einträgst (unterschiedliche MQTT-Topics
+  & Payloads werden automatisch verwendet).
 - Live-Countdown – läuft in einer Schleife **nur während eines aktiven Timers**,
   kein Sekunden-Trigger → **im Leerlauf null Systemlast**
-- Anzeige-Modus wählbar: **Im App-Wechsel** (Custom App) oder **Nur Timer
+- Anzeige-Modus wählbar: **Im App-Wechsel** (Custom/Pushed App) oder **Nur Timer
   anpinnen** (gehaltene Notification)
 - Farben per Farbrad, Alarm-Effekt als Dropdown, optionales Icon
 - Blinken & Alarmdauer einstellbar
 - **Fehlalarm-sicher:** Alarm nur beim Erreichen der Zielzeit – nie beim Stellen
-  oder Abbrechen; Abbruch entfernt die Anzeige automatisch
+  oder Abbrechen; Abbruch entfernt die Anzeige auf allen Geräten
 
-**Voraussetzungen:** MQTT + AWTRIX 3, [Alexa Media Player](https://github.com/alandtse/alexa_media_player) (HACS)
+**Voraussetzungen:** MQTT + mind. eine AWTRIX-Uhr (Firmware 3 oder NG),
+[Alexa Media Player](https://github.com/alandtse/alexa_media_player) (HACS)
 
 [![In Home Assistant öffnen](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fx1marc%2Fha-blueprints%2Fblob%2Fmain%2Falexa_timer_awtrix.yaml)
 
