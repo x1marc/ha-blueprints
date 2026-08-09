@@ -1,62 +1,106 @@
 blueprint:
-  name: AWTRIX Overlay bei Wettercode (OpenWeatherMap)
+  name: AWTRIX Wetter-Overlay 3 & NG (OpenWeatherMap) v2.0
   description: >
-    Sendet automatisch das passende Overlay an AWTRIX, wenn sich der
-    OpenWeatherMap Wettercode ändert.
-    Unterstützte Overlays: clear, drizzle, rain, storm, snow, thunder, frost
+    Sendet automatisch das passende Overlay an eine oder mehrere AWTRIX-Uhren,
+    wenn sich der OpenWeatherMap-Wettercode ändert – und einmal beim HA-Start.
+
+    Unterstützt beide Firmwares gleichzeitig:
+      • AWTRIX 3  (awtrix-light) – Topic <prefix>/settings, Key "OVERLAY"
+      • AWTRIX NG (blueforcer/awtrix-ng) – Topic <prefix>/cmd/display, Key "overlay"
+        ("clear" wird bei NG als overlay:null gesendet)
+
+    Trage die Topic-Prefixe deiner Geräte in die passende Liste ein; beide
+    Listen können gleichzeitig gefüllt sein. Unterstützte Overlays:
+    clear, drizzle, rain, storm, snow, thunder, frost
+
+    Changelog:
+      v2.0 - Multi-Device + AWTRIX NG (zwei Geräte-Listen, firmware-spezifische
+             Topics/Keys, clear->null bei NG); zusätzlich HA-Start-Trigger.
+      v1.0 - Erstausgabe (ein Topic, nur AWTRIX 3).
+
   domain: automation
   source_url: https://github.com/x1marc/ha-blueprints/blob/main/overlay_weatherV1.yaml
+
   input:
     weather_code_sensor:
       name: Wettercode-Sensor
-      description: Sensor mit dem OpenWeatherMap Wettercode (z. B. sensor.openweathermap_weather_code)
+      description: >
+        Sensor mit dem OpenWeatherMap-Wettercode
+        (z. B. sensor.openweathermap_weather_code).
       selector:
         entity:
-          domain: sensor
-    awtrix_topic:
-      name: MQTT Topic
+          filter:
+            - domain: sensor
+
+    awtrix3_prefixes:
+      name: "AWTRIX 3 Geräte (Topic-Prefixe)"
       description: >
-        MQTT Topic deiner AWTRIX für Settings (z. B. awtrix/settings).
-        Das Overlay wird über den OVERLAY-Key in den Settings gesetzt.
-      default: "awtrix/settings"
+        MQTT-Prefixe deiner AWTRIX-3-Geräte, z. B. "awtrix". Das Overlay geht an
+        <prefix>/settings. Mehrere möglich; leer lassen, wenn keine vorhanden.
+      default: ["awtrix"]
+      selector:
+        text:
+          multiple: true
 
-trigger:
-  - platform: state
-    entity_id: !input weather_code_sensor
-
-variables:
-  code: "{{ trigger.to_state.state | int(default=800) }}"
-  overlay: >
-    {% set c = code %}
-    {# 2xx – Gewitter #}
-    {% if c in [200, 201, 202, 210, 211, 212, 221, 230, 231, 232] %}
-      thunder
-    {# 3xx – Nieselregen / Sprühregen #}
-    {% elif c in [300, 301, 302, 310, 311, 312, 313, 314, 321] %}
-      drizzle
-    {# 5xx – Regen; 502–504 und 522 = Starkregen → storm #}
-    {% elif c in [502, 503, 504, 522] %}
-      storm
-    {% elif c in [500, 501, 511, 520, 521, 531] %}
-      rain
-    {# 6xx – Schnee / Schneeregen / Eisregen #}
-    {% elif c in [600, 601, 602, 611, 612, 613, 615, 616, 620, 621, 622] %}
-      snow
-    {# 7xx – Atmosphäre (Nebel, Dunst, Sand, Asche, Sturm, Tornado) #}
-    {# 781 = Tornado → storm; 771 = Böen → storm; Rest → frost (Sichtbehinderung) #}
-    {% elif c in [771, 781] %}
-      storm
-    {% elif c in [701, 711, 721, 731, 741, 751, 761, 762] %}
-      frost
-    {# 800 = klarer Himmel, 801–804 = bewölkt → clear #}
-    {% else %}
-      clear
-    {% endif %}
-
-action:
-  - service: mqtt.publish
-    data:
-      topic: !input awtrix_topic
-      payload: "{{ {'OVERLAY': overlay | trim} | tojson }}"
+    awtrixng_prefixes:
+      name: "AWTRIX NG Geräte (Topic-Prefixe)"
+      description: >
+        MQTT-Prefixe deiner AWTRIX-NG-Geräte, z. B. "awtrixNG". Das Overlay geht
+        an <prefix>/cmd/display. Mehrere möglich; leer lassen, wenn keine.
+      default: []
+      selector:
+        text:
+          multiple: true
 
 mode: single
+max_exceeded: silent
+
+variables:
+  weather_code_sensor: !input weather_code_sensor
+  awtrix3_prefixes: !input awtrix3_prefixes
+  awtrixng_prefixes: !input awtrixng_prefixes
+  # Aktuellen Wettercode aus dem Sensor lesen (funktioniert für State- und
+  # HA-Start-Trigger gleichermaßen). Fallback 800 = klarer Himmel.
+  code: "{{ states(weather_code_sensor) | int(default=800) }}"
+  # Wettercode -> Overlay-Name
+  overlay: >
+    {% set c = code %}
+    {% if c in [200, 201, 202, 210, 211, 212, 221, 230, 231, 232] %}thunder
+    {% elif c in [300, 301, 302, 310, 311, 312, 313, 314, 321] %}drizzle
+    {% elif c in [502, 503, 504, 522] %}storm
+    {% elif c in [500, 501, 511, 520, 521, 531] %}rain
+    {% elif c in [600, 601, 602, 611, 612, 613, 615, 616, 620, 621, 622] %}snow
+    {% elif c in [771, 781] %}storm
+    {% elif c in [701, 711, 721, 731, 741, 751, 761, 762] %}frost
+    {% else %}clear
+    {% endif %}
+  overlay_name: "{{ overlay | trim }}"
+
+triggers:
+  - trigger: state
+    entity_id: !input weather_code_sensor
+    id: change
+  - trigger: homeassistant
+    event: start
+    id: hastart
+
+conditions: []
+
+actions:
+  # ── AWTRIX 3: OVERLAY in die Settings schreiben ────────────────
+  - repeat:
+      for_each: "{{ awtrix3_prefixes }}"
+      sequence:
+        - action: mqtt.publish
+          data:
+            topic: "{{ repeat.item }}/settings"
+            payload: "{{ {'OVERLAY': overlay_name} | to_json }}"
+
+  # ── AWTRIX NG: overlay im Display setzen ("clear" -> null) ─────
+  - repeat:
+      for_each: "{{ awtrixng_prefixes }}"
+      sequence:
+        - action: mqtt.publish
+          data:
+            topic: "{{ repeat.item }}/cmd/display"
+            payload: "{{ {'overlay': (none if overlay_name == 'clear' else overlay_name)} | to_json }}"

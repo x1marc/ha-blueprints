@@ -61,10 +61,12 @@ https://github.com/x1marc/ha-blueprints/blob/main/alexa_timer_awtrix.yaml
 
 **Datei:** `overlay_weatherV1.yaml`
 
-Setzt automatisch ein passendes **Overlay** auf der AWTRIX-Anzeige, sobald sich
-der OpenWeatherMap-Wettercode ändert – z. B. Regentropfen bei Regen oder
-Schneeflocken bei Schnee. Das Overlay wird per MQTT in die AWTRIX-Settings
-geschrieben (`OVERLAY`-Key).
+Setzt automatisch ein passendes **Overlay** auf **einer oder mehreren**
+AWTRIX-Uhren, sobald sich der OpenWeatherMap-Wettercode ändert (und beim
+HA-Start) – z. B. Regentropfen bei Regen oder Schneeflocken bei Schnee.
+Unterstützt **beide Firmwares gleichzeitig**:
+[AWTRIX 3](https://blueforcer.github.io/awtrix3/) (`<prefix>/settings`, `OVERLAY`)
+und [AWTRIX NG](https://blueforcer.github.io/awtrix-ng/) (`<prefix>/cmd/display`, `overlay`).
 
 **Funktionen**
 
@@ -72,13 +74,17 @@ geschrieben (`OVERLAY`-Key).
   `thunder`, `drizzle`, `rain`, `storm`, `snow`, `frost`, `clear`
 - Starkregen (502–504, 522), Tornado/Böen (781, 771) → `storm`
 - Nebel/Dunst/Sand (7xx) → `frost`; klarer/bewölkter Himmel (800–804) → `clear`
+- **Mehrere Geräte & beide Firmwares** über zwei Listen; bei NG wird `clear`
+  automatisch als `overlay: null` gesendet (Overlay aus)
+- Setzt das Overlay auch **nach HA-Neustart** einmalig
 
 **Inputs**
 
 - **Wettercode-Sensor** – z. B. `sensor.openweathermap_weather_code`
-- **MQTT-Topic** – Settings-Topic der AWTRIX (Standard `awtrix/settings`)
+- **AWTRIX 3 Geräte** / **AWTRIX NG Geräte** – je eine Liste von Topic-Prefixen
 
-**Voraussetzungen:** MQTT + AWTRIX 3, [OpenWeatherMap](https://www.home-assistant.io/integrations/openweathermap/)-Integration mit Wettercode-Sensor
+**Voraussetzungen:** MQTT + mind. eine AWTRIX-Uhr (Firmware 3 oder NG),
+[OpenWeatherMap](https://www.home-assistant.io/integrations/openweathermap/)-Integration mit Wettercode-Sensor
 
 [![In Home Assistant öffnen](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fx1marc%2Fha-blueprints%2Fblob%2Fmain%2Foverlay_weatherV1.yaml)
 
