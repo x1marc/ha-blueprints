@@ -1,5 +1,5 @@
 blueprint:
-  name: AWTRIX Wetter-Overlay 3 & NG (OpenWeatherMap) v2.0
+  name: AWTRIX Wetter-Overlay 3 & NG (OpenWeatherMap) v2.1
   description: >
     Sendet automatisch das passende Overlay an eine oder mehrere AWTRIX-Uhren,
     wenn sich der OpenWeatherMap-Wettercode ändert – und einmal beim HA-Start.
@@ -14,6 +14,8 @@ blueprint:
     clear, drizzle, rain, storm, snow, thunder, frost
 
     Changelog:
+      v2.1 - NG: "frost" (Nebel/7xx) wird auf AWTRIX NG als overlay:null (aus)
+             gesendet, da NG dieses Overlay nicht umsetzt. AWTRIX 3 behält frost.
       v2.0 - Multi-Device + AWTRIX NG (zwei Geräte-Listen, firmware-spezifische
              Topics/Keys, clear->null bei NG); zusätzlich HA-Start-Trigger.
       v1.0 - Erstausgabe (ein Topic, nur AWTRIX 3).
@@ -96,11 +98,13 @@ actions:
             topic: "{{ repeat.item }}/settings"
             payload: "{{ {'OVERLAY': overlay_name} | to_json }}"
 
-  # ── AWTRIX NG: overlay im Display setzen ("clear" -> null) ─────
+  # ── AWTRIX NG: overlay im Display setzen ──────────────────────
+  # "clear" -> null (aus). "frost" gibt es bei NG praktisch nicht (Nebel/7xx),
+  # daher auf NG ebenfalls aus. AWTRIX 3 behält oben weiterhin "frost".
   - repeat:
       for_each: "{{ awtrixng_prefixes }}"
       sequence:
         - action: mqtt.publish
           data:
             topic: "{{ repeat.item }}/cmd/display"
-            payload: "{{ {'overlay': (none if overlay_name == 'clear' else overlay_name)} | to_json }}"
+            payload: "{{ {'overlay': (none if overlay_name in ['clear', 'frost'] else overlay_name)} | to_json }}"
