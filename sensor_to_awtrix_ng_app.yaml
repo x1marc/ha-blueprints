@@ -23,6 +23,10 @@ blueprint:
     Settings -> MQTT (Standard "awtrixng").
 
     Changelog:
+      v1.1 - Fix: Ein reiner Zahlenwert ohne Einheit/Text davor wurde durch HA's
+             native Typwandlung als JSON-Zahl statt Text gesendet und von der Uhr
+             ignoriert (nur das Icon war sichtbar). Der Text wird jetzt immer als
+             String gesendet.
       v1.0 - Erstausgabe: Sensorwert als Pushed App (Text davor/Einheit/Rundung,
              Icon + Icon-Modus, Farbe, Dauer, Lifetime, Intervall).
 
@@ -180,7 +184,7 @@ actions:
       topic: "{{ awtrix_prefix }}/cmd/apps/pushed/{{ awtrix_app }}"
       payload: >-
         {
-          "text": {{ display_text | tojson }},
+          "text": {{ display_text | string | tojson }},
           {% if icon_id %}"icon": "{{ icon_id }}",
           "iconMode": "{{ icon_mode }}",
           {% endif %}"durationMs": {{ (disp_duration | int(8)) * 1000 }},
