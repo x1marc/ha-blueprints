@@ -1,0 +1,189 @@
+blueprint:
+  name: Sensor → AWTRIX NG App
+  description: >
+    Zeigt den Wert eines beliebigen Sensors als eigene App auf einer
+    AWTRIX-NG-Uhr (blueforcer/awtrix-ng) an und hält ihn automatisch aktuell –
+    OHNE dass du eine Automation schreiben musst. Einfach importieren, Sensor
+    wählen, App benennen, fertig.
+
+    Die App wird bei jeder Sensoränderung, in einem einstellbaren Intervall und
+    nach jedem HA-Neustart aktualisiert. Gleicher App-Name = die App wird jedes
+    Mal überschrieben (statt neue anzulegen).
+
+    Der Anzeige-Text wird komfortabel zusammengebaut:
+      [Text davor] [Sensorwert auf N Stellen gerundet] [Einheit]
+    Beispiel: Text davor "" · Einheit "kWh" · 1 Stelle  ->  "12.3 kWh".
+    Ist der Sensorwert keine Zahl (z. B. "Zuhause"), wird er unverändert gezeigt.
+
+    Diese Blueprint sendet direkt per MQTT – die HA-AWTRIX-NG-Skripte werden
+    NICHT benötigt. Sie ist bewusst nur für AWTRIX NG (nicht AWTRIX 3).
+
+    Voraussetzungen: aktive MQTT-Integration; eine per MQTT verbundene
+    AWTRIX-NG-Uhr. Den Prefix findest du in der Weboberfläche der Uhr unter
+    Settings -> MQTT (Standard "awtrixng").
+
+    Changelog:
+      v1.0 - Erstausgabe: Sensorwert als Pushed App (Text davor/Einheit/Rundung,
+             Icon + Icon-Modus, Farbe, Dauer, Lifetime, Intervall).
+
+  domain: automation
+  source_url: https://github.com/x1marc/ha-blueprints/blob/main/sensor_to_awtrix_ng_app.yaml
+
+  input:
+    # ─── 📥 QUELLE ────────────────────────────────────────────────
+    sensor:
+      name: Sensor
+      description: Der Sensor, dessen Wert angezeigt werden soll.
+      selector:
+        entity: {}
+
+    # ─── 🖥️ ANZEIGE ──────────────────────────────────────────────
+    app_name:
+      name: App-Name (auf der Uhr)
+      description: >-
+        Frei wählbarer, eindeutiger Name dieser App (nur Buchstaben/Zahlen/_/-),
+        z. B. "pv_ertrag". Gleicher Name = App wird aktualisiert.
+      default: sensorwert
+      selector:
+        text:
+    text_prefix:
+      name: Text davor (optional)
+      description: 'Kurzes Label vor dem Wert, z. B. "PV " (mit Leerzeichen).'
+      default: ""
+      selector:
+        text:
+    unit:
+      name: Einheit (optional)
+      description: 'Wird an den Wert angehängt, z. B. "kWh", "°C", "%".'
+      default: ""
+      selector:
+        text:
+    decimals:
+      name: Nachkommastellen
+      description: Auf wie viele Stellen der Wert gerundet wird (nur bei Zahlen).
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 3
+          step: 1
+          mode: box
+    icon:
+      name: Icon-Nummer (optional)
+      description: >-
+        Nummer eines Icons, das auf der Uhr gespeichert ist (z. B. "55972").
+        Leer = kein Icon. Icons: developer.lametric.com/icons.
+      default: ""
+      selector:
+        text:
+    icon_mode:
+      name: Icon-Verhalten
+      description: Wie sich das Icon verhält, wenn der Text scrollt.
+      default: fixed
+      selector:
+        select:
+          options:
+            - label: fest (bleibt stehen)
+              value: fixed
+            - label: einmal wegschieben
+              value: pushOnce
+            - label: mitscrollen
+              value: push
+    color:
+      name: Textfarbe
+      description: Farbe des Textes.
+      default: [255, 255, 255]
+      selector:
+        color_rgb:
+
+    # ─── ⚙️ VERHALTEN ─────────────────────────────────────────────
+    update_pattern:
+      name: Aktualisierungs-Intervall
+      description: >-
+        Wie oft die App zusätzlich zur Sensoränderung aktualisiert wird
+        (nützlich für selten wechselnde Sensoren).
+      default: "/15"
+      selector:
+        select:
+          options:
+            - label: alle 5 Minuten
+              value: "/5"
+            - label: alle 10 Minuten
+              value: "/10"
+            - label: alle 15 Minuten
+              value: "/15"
+            - label: alle 30 Minuten
+              value: "/30"
+    duration:
+      name: Anzeigedauer (Sekunden)
+      description: Wie lange die App pro Durchlauf im App-Wechsel sichtbar ist.
+      default: 8
+      selector:
+        number:
+          min: 1
+          max: 180
+          step: 1
+    lifetime:
+      name: Selbst-Löschen nach (Sekunden)
+      description: >-
+        Verschwindet die App, wenn so lange keine Aktualisierung kam. 0 = nie
+        (bleibt dauerhaft). Tipp: etwas höher als das Intervall wählen.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 86400
+          step: 1
+
+    # ─── 📟 GERÄT ─────────────────────────────────────────────────
+    prefix:
+      name: AWTRIX-NG-Prefix
+      description: MQTT-Prefix deiner Uhr (Settings -> MQTT). Standard "awtrixng".
+      default: awtrixng
+      selector:
+        text:
+
+mode: single
+max_exceeded: silent
+
+variables:
+  sensor_entity: !input sensor
+  awtrix_prefix: !input prefix
+  awtrix_app: !input app_name
+  icon_id: !input icon
+  icon_mode: !input icon_mode
+  text_prefix: !input text_prefix
+  unit: !input unit
+  decimals: !input decimals
+  text_color: !input color
+  disp_duration: !input duration
+  disp_lifetime: !input lifetime
+  display_text: >-
+    {% set s = states(sensor_entity) %}{% set num = s | float(none) %}{% set d = decimals | int(1) %}{{ text_prefix }}{{ ((num | round(d) | int) if d == 0 else (num | round(d))) if num is not none else s }}{{ (' ' ~ unit) if unit else '' }}
+
+triggers:
+  - trigger: time_pattern
+    minutes: !input update_pattern
+  - trigger: state
+    entity_id: !input sensor
+  - trigger: homeassistant
+    event: start
+
+conditions: []
+
+actions:
+  - action: mqtt.publish
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      topic: "{{ awtrix_prefix }}/cmd/apps/pushed/{{ awtrix_app }}"
+      payload: >-
+        {
+          "text": {{ display_text | tojson }},
+          {% if icon_id %}"icon": "{{ icon_id }}",
+          "iconMode": "{{ icon_mode }}",
+          {% endif %}"durationMs": {{ (disp_duration | int(8)) * 1000 }},
+          "lifetimeMs": {{ (disp_lifetime | int(0)) * 1000 }},
+          "textColor": {{ (text_color or [255,255,255]) | tojson }}
+        }

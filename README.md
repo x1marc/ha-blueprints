@@ -1,7 +1,7 @@
 # Home Assistant Blueprints
 
 Eine Sammlung von [Home Assistant](https://www.home-assistant.io/) Blueprints
-rund um **AWTRIX 3** (Ulanzi-Uhr) und Pflanzenpflege. Jede Blueprint lässt sich
+rund um **AWTRIX 3 / AWTRIX NG** (Ulanzi-Uhr) und Pflanzenpflege. Jede Blueprint lässt sich
 mit einem Klick über den **„In Home Assistant öffnen"**-Button importieren oder
 manuell per URL.
 
@@ -9,6 +9,7 @@ manuell per URL.
 
 - [Alexa Timer → AWTRIX 3 & NG](#alexa-timer--awtrix-3--ng)
 - [AWTRIX Wetter-Overlay (OpenWeatherMap)](#awtrix-wetter-overlay-openweathermap)
+- [Sensor → AWTRIX NG App](#sensor--awtrix-ng-app)
 - [Bodenfeuchte Alarm System](#bodenfeuchte-alarm-system)
 - [Installation & Updates](#installation--updates)
 
@@ -16,6 +17,7 @@ manuell per URL.
 |---|---|
 | [🔔 Alexa Timer → AWTRIX 3 & NG](#alexa-timer--awtrix-3--ng) | Alexa-Timer als Live-Countdown auf mehreren AWTRIX-Uhren (Firmware 3 **und** NG) + Alarm bei Ablauf |
 | [🌦️ AWTRIX Wetter-Overlay](#awtrix-wetter-overlay-openweathermap) | Setzt passend zum Wetter ein AWTRIX-Overlay (Regen, Schnee, Gewitter …) |
+| [📈 Sensor → AWTRIX NG App](#sensor--awtrix-ng-app) | Zeigt jeden Sensorwert als eigene App auf AWTRIX NG – **ohne eigene Automation** |
 | [🌱 Bodenfeuchte Alarm System](#bodenfeuchte-alarm-system) | Trocken-Alarm, Auto-Gießen und Multi-Channel-Benachrichtigung für Pflanzen |
 
 ---
@@ -90,6 +92,42 @@ und [AWTRIX NG](https://blueforcer.github.io/awtrix-ng/) (`<prefix>/cmd/display`
 
 ```
 https://github.com/x1marc/ha-blueprints/blob/main/overlay_weatherV1.yaml
+```
+
+---
+
+## Sensor → AWTRIX NG App
+
+**Datei:** `sensor_to_awtrix_ng_app.yaml`
+
+Zeigt den Wert eines **beliebigen Sensors** als eigene App auf einer
+**AWTRIX-NG**-Uhr ([blueforcer/awtrix-ng](https://blueforcer.github.io/awtrix-ng/))
+und hält ihn automatisch aktuell – **ohne dass du eine Automation schreiben
+musst**. Importieren, Sensor wählen, App benennen, fertig. (Nur AWTRIX NG, nicht
+AWTRIX 3.)
+
+**Funktionen**
+
+- Anzeige-Text wird komfortabel gebaut: **[Text davor] [Wert gerundet] [Einheit]**
+  → z. B. `PV 12.3 kWh`. Nicht-numerische Werte (z. B. `Zuhause`) werden
+  unverändert angezeigt.
+- **Aktualisierung** bei jeder Sensoränderung, in einem wählbaren Intervall
+  (5–30 Min) und nach HA-Neustart. Gleicher App-Name → App wird überschrieben.
+- **Icon** (Nummer) + Icon-Modus, **Farbe** per Farbrad, **Anzeigedauer** und
+  optionales **Selbst-Löschen** (Lifetime)
+- Sendet **direkt per MQTT** – die
+  [HA-AWTRIX-NG-Skripte](https://github.com/x1marc/ha-awtrix-ng-scripts) werden
+  dafür **nicht** benötigt
+
+**Inputs (Auszug):** Sensor · App-Name · Text davor / Einheit / Nachkommastellen ·
+Icon + Modus · Textfarbe · Intervall · Dauer · Lifetime · Prefix (Standard `awtrixng`)
+
+**Voraussetzungen:** MQTT + eine per MQTT verbundene **AWTRIX-NG**-Uhr
+
+[![In Home Assistant öffnen](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fx1marc%2Fha-blueprints%2Fblob%2Fmain%2Fsensor_to_awtrix_ng_app.yaml)
+
+```
+https://github.com/x1marc/ha-blueprints/blob/main/sensor_to_awtrix_ng_app.yaml
 ```
 
 ---
