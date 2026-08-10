@@ -1,34 +1,38 @@
 blueprint:
   name: Sensor → AWTRIX NG App
   description: >
-    Zeigt den Wert eines beliebigen Sensors als eigene App auf einer
-    AWTRIX-NG-Uhr (blueforcer/awtrix-ng) an und hält ihn automatisch aktuell –
-    OHNE dass du eine Automation schreiben musst. Einfach importieren, Sensor
-    wählen, App benennen, fertig.
+    Blendet den Wert eines beliebigen Sensors in einem festen Intervall (z. B.
+    alle 30 Min) KURZ als App auf einer AWTRIX-NG-Uhr ein: Die Uhr springt zum
+    Einblenden kurz zur App, zeigt den aktuellen Wert für die eingestellte Dauer
+    und entfernt die App danach wieder. Sonst ist die App NICHT im App-Wechsel.
+    Kein Automations-Schreiben nötig – importieren, Sensor wählen, Intervall
+    wählen, fertig.
 
-    Die App wird bei jeder Sensoränderung, in einem einstellbaren Intervall und
-    nach jedem HA-Neustart aktualisiert. Gleicher App-Name = die App wird jedes
-    Mal überschrieben (statt neue anzulegen).
-
-    Der Anzeige-Text wird komfortabel zusammengebaut:
+    Der Anzeige-Text wird zusammengebaut aus:
       [Text davor] [Sensorwert auf N Stellen gerundet] [Einheit]
-    Beispiel: Text davor "" · Einheit "kWh" · 1 Stelle  ->  "12.3 kWh".
-    Ist der Sensorwert keine Zahl (z. B. "Zuhause"), wird er unverändert gezeigt.
+    z. B. Einheit "kWh", 1 Stelle -> "12.3 kWh". Ist der Wert keine Zahl
+    (z. B. "Zuhause"), wird er unverändert gezeigt.
 
     Diese Blueprint sendet direkt per MQTT – die HA-AWTRIX-NG-Skripte werden
-    NICHT benötigt. Sie ist bewusst nur für AWTRIX NG (nicht AWTRIX 3).
+    NICHT benötigt. Nur für AWTRIX NG (nicht AWTRIX 3).
+
+    Hinweis: AWTRIX NG kann eine App nicht von sich aus "nur alle X Min" zeigen –
+    darum blendet diese Blueprint sie aktiv ein und entfernt sie wieder. Beim
+    Einblenden wird die gerade laufende App kurz unterbrochen.
 
     Voraussetzungen: aktive MQTT-Integration; eine per MQTT verbundene
     AWTRIX-NG-Uhr. Den Prefix findest du in der Weboberfläche der Uhr unter
     Settings -> MQTT (Standard "awtrixng").
 
     Changelog:
+      v2.0 - Verhalten geändert: Die App wird jetzt im Intervall KURZ eingeblendet
+             (hinspringen -> zeigen -> wieder entfernen) statt dauerhaft in der
+             Rotation zu bleiben. Neues, frei einstellbares Feld
+             "Anzeige-Intervall (Minuten)"; das Feld "Selbst-Löschen" entfällt.
       v1.1 - Fix: Ein reiner Zahlenwert ohne Einheit/Text davor wurde durch HA's
-             native Typwandlung als JSON-Zahl statt Text gesendet und von der Uhr
-             ignoriert (nur das Icon war sichtbar). Der Text wird jetzt immer als
-             String gesendet.
-      v1.0 - Erstausgabe: Sensorwert als Pushed App (Text davor/Einheit/Rundung,
-             Icon + Icon-Modus, Farbe, Dauer, Lifetime, Intervall).
+             native Typwandlung als JSON-Zahl statt Text gesendet und ignoriert
+             (nur das Icon war sichtbar). Text wird jetzt immer als String gesendet.
+      v1.0 - Erstausgabe: Sensorwert als Pushed App.
 
   domain: automation
   source_url: https://github.com/x1marc/ha-blueprints/blob/main/sensor_to_awtrix_ng_app.yaml
@@ -37,7 +41,7 @@ blueprint:
     # ─── 📥 QUELLE ────────────────────────────────────────────────
     sensor:
       name: Sensor
-      description: Der Sensor, dessen Wert angezeigt werden soll.
+      description: Der Sensor, dessen Wert eingeblendet werden soll.
       selector:
         entity: {}
 
@@ -46,7 +50,7 @@ blueprint:
       name: App-Name (auf der Uhr)
       description: >-
         Frei wählbarer, eindeutiger Name dieser App (nur Buchstaben/Zahlen/_/-),
-        z. B. "pv_ertrag". Gleicher Name = App wird aktualisiert.
+        z. B. "pv_ertrag".
       default: sensorwert
       selector:
         text:
@@ -101,43 +105,34 @@ blueprint:
         color_rgb:
 
     # ─── ⚙️ VERHALTEN ─────────────────────────────────────────────
-    update_pattern:
-      name: Aktualisierungs-Intervall
+    interval_minutes:
+      name: Anzeige-Intervall (Minuten)
       description: >-
-        Wie oft die App zusätzlich zur Sensoränderung aktualisiert wird
-        (nützlich für selten wechselnde Sensoren).
-      default: "/15"
+        Alle wie viele Minuten die App kurz eingeblendet wird (frei einstellbar).
+        Dazwischen ist sie nicht sichtbar. Standard 30.
+      default: 30
       selector:
-        select:
-          options:
-            - label: alle 5 Minuten
-              value: "/5"
-            - label: alle 10 Minuten
-              value: "/10"
-            - label: alle 15 Minuten
-              value: "/15"
-            - label: alle 30 Minuten
-              value: "/30"
+        number:
+          min: 1
+          max: 720
+          step: 1
+          unit_of_measurement: min
+          mode: box
     duration:
       name: Anzeigedauer (Sekunden)
-      description: Wie lange die App pro Durchlauf im App-Wechsel sichtbar ist.
+      description: Wie lange die App bei jedem Einblenden zu sehen ist.
       default: 8
       selector:
         number:
           min: 1
-          max: 180
+          max: 60
           step: 1
-    lifetime:
-      name: Selbst-Löschen nach (Sekunden)
-      description: >-
-        Verschwindet die App, wenn so lange keine Aktualisierung kam. 0 = nie
-        (bleibt dauerhaft). Tipp: etwas höher als das Intervall wählen.
-      default: 0
+    show_on_start:
+      name: Auch nach HA-Neustart einblenden
+      description: Blendet die App einmal ein, wenn Home Assistant startet.
+      default: true
       selector:
-        number:
-          min: 0
-          max: 86400
-          step: 1
+        boolean:
 
     # ─── 📟 GERÄT ─────────────────────────────────────────────────
     prefix:
@@ -161,21 +156,29 @@ variables:
   decimals: !input decimals
   text_color: !input color
   disp_duration: !input duration
-  disp_lifetime: !input lifetime
+  show_on_start: !input show_on_start
+  interval_minutes: !input interval_minutes
   display_text: >-
     {% set s = states(sensor_entity) %}{% set num = s | float(none) %}{% set d = decimals | int(1) %}{{ text_prefix }}{{ ((num | round(d) | int) if d == 0 else (num | round(d))) if num is not none else s }}{{ (' ' ~ unit) if unit else '' }}
 
 triggers:
   - trigger: time_pattern
-    minutes: !input update_pattern
-  - trigger: state
-    entity_id: !input sensor
+    minutes: "/1"
+    id: tick
   - trigger: homeassistant
     event: start
+    id: ha_start
 
-conditions: []
+conditions:
+  # Nur alle <Intervall> Minuten einblenden (Tick), bzw. beim HA-Start (falls gewünscht)
+  - condition: template
+    value_template: >-
+      {{ (trigger.id == 'ha_start' and show_on_start)
+         or (trigger.id == 'tick'
+             and (now().hour * 60 + now().minute) % (interval_minutes | int(30)) == 0) }}
 
 actions:
+  # 1) App mit aktuellem Wert anlegen (Sicherheits-Lifetime, falls Schritt 3 ausfällt)
   - action: mqtt.publish
     data:
       evaluate_payload: false
@@ -187,7 +190,26 @@ actions:
           "text": {{ display_text | string | tojson }},
           {% if icon_id %}"icon": "{{ icon_id }}",
           "iconMode": "{{ icon_mode }}",
-          {% endif %}"durationMs": {{ (disp_duration | int(8)) * 1000 }},
-          "lifetimeMs": {{ (disp_lifetime | int(0)) * 1000 }},
+          {% endif %}"durationMs": {{ (disp_duration | int(8) + 10) * 1000 }},
+          "lifetimeMs": {{ (disp_duration | int(8) + 60) * 1000 }},
           "textColor": {{ (text_color or [255,255,255]) | tojson }}
         }
+  # 2) Sofort zur App springen, damit sie jetzt sichtbar ist
+  - action: mqtt.publish
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      topic: "{{ awtrix_prefix }}/cmd/apps/switch"
+      payload: '{"name": "{{ awtrix_app }}", "fast": true}'
+  # 3) Für die Anzeigedauer stehen lassen ...
+  - delay:
+      seconds: "{{ disp_duration | int(8) }}"
+  # 4) ... dann App wieder entfernen (leeres Payload = löschen)
+  - action: mqtt.publish
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      topic: "{{ awtrix_prefix }}/cmd/apps/pushed/{{ awtrix_app }}"
+      payload: ""
