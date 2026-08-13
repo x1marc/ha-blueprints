@@ -25,6 +25,9 @@ blueprint:
     Settings -> MQTT (Standard "awtrixng").
 
     Changelog:
+      v2.2 - Ressourcenschonend: Die Automation feuert jetzt NUR im gewählten
+             Intervall (time_pattern) statt jede Minute mit Prüfung. Das Feld
+             "Anzeige-Intervall" ist dafür eine Auswahl (5-45 Min bzw. stündlich).
       v2.1 - Feld "AWTRIX-NG-Prefix" nach ganz oben verschoben (wie in den
              Skripten). Keine Verhaltensänderung.
       v2.0 - Verhalten geändert: Die App wird jetzt im Intervall KURZ eingeblendet
@@ -115,19 +118,29 @@ blueprint:
         color_rgb:
 
     # ─── ⚙️ VERHALTEN ─────────────────────────────────────────────
-    interval_minutes:
-      name: Anzeige-Intervall (Minuten)
+    interval:
+      name: Anzeige-Intervall
       description: >-
-        Alle wie viele Minuten die App kurz eingeblendet wird (frei einstellbar).
-        Dazwischen ist sie nicht sichtbar. Standard 30.
-      default: 30
+        Wie oft die App kurz eingeblendet wird. Die Automation wird nur zu diesen
+        Zeitpunkten aktiv (kein dauerndes Prüfen im Minutentakt).
+      default: "/30"
       selector:
-        number:
-          min: 1
-          max: 720
-          step: 1
-          unit_of_measurement: min
-          mode: box
+        select:
+          options:
+            - label: alle 5 Minuten
+              value: "/5"
+            - label: alle 10 Minuten
+              value: "/10"
+            - label: alle 15 Minuten
+              value: "/15"
+            - label: alle 20 Minuten
+              value: "/20"
+            - label: alle 30 Minuten
+              value: "/30"
+            - label: alle 45 Minuten
+              value: "/45"
+            - label: stündlich (zur vollen Stunde)
+              value: "0"
     duration:
       name: Anzeigedauer (Sekunden)
       description: Wie lange die App bei jedem Einblenden zu sehen ist.
@@ -159,25 +172,22 @@ variables:
   text_color: !input color
   disp_duration: !input duration
   show_on_start: !input show_on_start
-  interval_minutes: !input interval_minutes
   display_text: >-
     {% set s = states(sensor_entity) %}{% set num = s | float(none) %}{% set d = decimals | int(1) %}{{ text_prefix }}{{ ((num | round(d) | int) if d == 0 else (num | round(d))) if num is not none else s }}{{ (' ' ~ unit) if unit else '' }}
 
 triggers:
+  # Feuert NUR im gewählten Intervall (nicht jede Minute)
   - trigger: time_pattern
-    minutes: "/1"
+    minutes: !input interval
     id: tick
   - trigger: homeassistant
     event: start
     id: ha_start
 
 conditions:
-  # Nur alle <Intervall> Minuten einblenden (Tick), bzw. beim HA-Start (falls gewünscht)
+  # Beim HA-Start nur einblenden, wenn gewünscht; im Intervall immer.
   - condition: template
-    value_template: >-
-      {{ (trigger.id == 'ha_start' and show_on_start)
-         or (trigger.id == 'tick'
-             and (now().hour * 60 + now().minute) % (interval_minutes | int(30)) == 0) }}
+    value_template: "{{ trigger.id != 'ha_start' or show_on_start }}"
 
 actions:
   # 1) App mit aktuellem Wert anlegen (Sicherheits-Lifetime, falls Schritt 3 ausfällt)
