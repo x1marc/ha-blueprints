@@ -25,6 +25,8 @@ blueprint:
     Settings -> MQTT (Standard "awtrixng").
 
     Changelog:
+      v2.1 - Feld "AWTRIX-NG-Prefix" nach ganz oben verschoben (wie in den
+             Skripten). Keine Verhaltensänderung.
       v2.0 - Verhalten geändert: Die App wird jetzt im Intervall KURZ eingeblendet
              (hinspringen -> zeigen -> wieder entfernen) statt dauerhaft in der
              Rotation zu bleiben. Neues, frei einstellbares Feld
@@ -38,6 +40,14 @@ blueprint:
   source_url: https://github.com/x1marc/ha-blueprints/blob/main/sensor_to_awtrix_ng_app.yaml
 
   input:
+    # ─── 📟 GERÄT ─────────────────────────────────────────────────
+    prefix:
+      name: AWTRIX-NG-Prefix
+      description: MQTT-Prefix deiner Uhr (Settings -> MQTT). Standard "awtrixng".
+      default: awtrixng
+      selector:
+        text:
+
     # ─── 📥 QUELLE ────────────────────────────────────────────────
     sensor:
       name: Sensor
@@ -133,14 +143,6 @@ blueprint:
       default: true
       selector:
         boolean:
-
-    # ─── 📟 GERÄT ─────────────────────────────────────────────────
-    prefix:
-      name: AWTRIX-NG-Prefix
-      description: MQTT-Prefix deiner Uhr (Settings -> MQTT). Standard "awtrixng".
-      default: awtrixng
-      selector:
-        text:
 
 mode: single
 max_exceeded: silent
