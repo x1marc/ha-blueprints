@@ -33,6 +33,8 @@ blueprint:
     Settings -> MQTT (Standard "awtrixng").
 
     Changelog:
+      v2.4 - Fix (Debugging): Die Einheit wird nicht mehr an nicht-numerische
+             Werte angehängt (z. B. kein "unavailable kWh" mehr).
       v2.3 - Anzeige-Intervall jetzt frei wählbar 1-120 Min. Ressourcenschonend
              über eine Selbst-Schleife (kein Minuten-Trigger): die Automation
              läuft einmal an und schläft zwischen den Auftritten.
@@ -171,7 +173,7 @@ variables:
   interval_minutes: !input interval_minutes
   show_on_start: !input show_on_start
   display_text: >-
-    {% set s = states(sensor_entity) %}{% set num = s | float(none) %}{% set d = decimals | int(1) %}{{ text_prefix }}{{ ((num | round(d) | int) if d == 0 else (num | round(d))) if num is not none else s }}{{ (' ' ~ unit) if unit else '' }}
+    {% set s = states(sensor_entity) %}{% set num = s | float(none) %}{% set d = decimals | int(1) %}{{ text_prefix }}{{ ((num | round(d) | int) if d == 0 else (num | round(d))) if num is not none else s }}{{ (' ' ~ unit) if (unit and num is not none) else '' }}
 
 triggers:
   # Kein Minuten-Trigger: die Schleife startet nur beim (Neu-)Start ...
