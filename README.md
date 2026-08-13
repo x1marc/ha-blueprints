@@ -1,5 +1,7 @@
 # Home Assistant Blueprints
 
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-x1marc-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/x1marc)
+
 Eine Sammlung von [Home Assistant](https://www.home-assistant.io/) Blueprints
 rund um **AWTRIX 3 / AWTRIX NG** (Ulanzi-Uhr) und Pflanzenpflege. Jede Blueprint lässt sich
 mit einem Klick über den **„In Home Assistant öffnen"**-Button importieren oder
