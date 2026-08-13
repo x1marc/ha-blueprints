@@ -11,39 +11,34 @@ blueprint:
     Der Anzeige-Text wird zusammengebaut aus:
       [Text davor] [Sensorwert auf N Stellen gerundet] [Einheit]
     z. B. Einheit "kWh", 1 Stelle -> "12.3 kWh". Ist der Wert keine Zahl
-    (z. B. "Zuhause"), wird er unverändert gezeigt.
+    (z. B. "Zuhause"), wird er unverändert (ohne Einheit) gezeigt.
 
-    Ressourcenschonend: Es gibt KEINEN Minuten-Trigger. Die Automation plant
-    sich selbst (zeigt -> schläft bis zum nächsten Intervall -> zeigt ...).
+    Technik: Die Automation prüft intern jede Minute kurz, ob das Intervall
+    erreicht ist, und blendet nur dann ein. Das ist zuverlässig und praktisch
+    ohne Systemlast (ein winziger Vergleich pro Minute).
 
     Diese Blueprint sendet direkt per MQTT – die HA-AWTRIX-NG-Skripte werden
     NICHT benötigt. Nur für AWTRIX NG (nicht AWTRIX 3).
 
-    Hinweise:
-    - AWTRIX NG kann eine App nicht von sich aus "nur alle X Min" zeigen – darum
-      blendet diese Blueprint sie aktiv ein und entfernt sie wieder. Beim
-      Einblenden wird die gerade laufende App kurz unterbrochen.
-    - Da die Automation als Dauer-Schleife läuft, startet sie nach einem HA-
-      Neustart und nach jedem Neu-Laden/Speichern von Automationen automatisch
-      neu. Schaltest du sie AUS und wieder EIN, läuft sie erst beim nächsten
-      HA-Neustart oder "Automationen neu laden" wieder an.
+    Hinweis: AWTRIX NG kann eine App nicht von sich aus "nur alle X Min" zeigen –
+    darum blendet diese Blueprint sie aktiv ein und entfernt sie wieder. Beim
+    Einblenden wird die gerade laufende App kurz unterbrochen.
 
     Voraussetzungen: aktive MQTT-Integration; eine per MQTT verbundene
     AWTRIX-NG-Uhr. Den Prefix findest du in der Weboberfläche der Uhr unter
     Settings -> MQTT (Standard "awtrixng").
 
     Changelog:
-      v2.4 - Fix (Debugging): Die Einheit wird nicht mehr an nicht-numerische
-             Werte angehängt (z. B. kein "unavailable kWh" mehr).
-      v2.3 - Anzeige-Intervall jetzt frei wählbar 1-120 Min. Ressourcenschonend
-             über eine Selbst-Schleife (kein Minuten-Trigger): die Automation
-             läuft einmal an und schläft zwischen den Auftritten.
-      v2.2 - Ressourcenschonend: nur noch im Intervall feuern statt jede Minute.
-      v2.1 - Feld "AWTRIX-NG-Prefix" nach ganz oben verschoben.
-      v2.0 - Verhalten: App wird im Intervall KURZ eingeblendet statt dauerhaft
-             in der Rotation zu bleiben.
-      v1.1 - Fix: reine Zahl ohne Einheit wurde als JSON-Zahl statt Text gesendet
-             (nur Icon sichtbar) -> Text jetzt immer als String.
+      v2.5 - Zuverlässigkeit: zurück zum Zeit-Trigger (prüft jede Minute kurz,
+             zeigt aber nur im Intervall). Die Selbst-Schleife (v2.3/2.4) konnte
+             nach dem Speichern gelegentlich nicht neu anlaufen.
+      v2.4 - Fix: Einheit wird nicht mehr an nicht-numerische Werte angehängt.
+      v2.3 - Anzeige-Intervall frei wählbar 1-120 Min.
+      v2.2 - Ressourcenschonend: nur im Intervall feuern statt jede Minute.
+      v2.1 - Feld "AWTRIX-NG-Prefix" nach ganz oben.
+      v2.0 - App wird im Intervall KURZ eingeblendet statt dauerhaft in der
+             Rotation zu bleiben.
+      v1.1 - Fix: reine Zahl ohne Einheit wurde als JSON-Zahl statt Text gesendet.
       v1.0 - Erstausgabe.
 
   domain: automation
@@ -82,7 +77,7 @@ blueprint:
         text:
     unit:
       name: Einheit (optional)
-      description: 'Wird an den Wert angehängt, z. B. "kWh", "°C", "%".'
+      description: 'Wird an Zahlenwerte angehängt, z. B. "kWh", "°C", "%".'
       default: ""
       selector:
         text:
@@ -148,10 +143,8 @@ blueprint:
           max: 60
           step: 1
     show_on_start:
-      name: Sofort einblenden (bei Start/Neu-Laden)
-      description: >-
-        An = die App wird beim (Neu-)Start der Automation sofort einmal
-        eingeblendet. Aus = es wird zuerst ein Intervall gewartet.
+      name: Auch nach HA-Neustart einblenden
+      description: Blendet die App einmal ein, wenn Home Assistant startet.
       default: true
       selector:
         boolean:
@@ -176,62 +169,55 @@ variables:
     {% set s = states(sensor_entity) %}{% set num = s | float(none) %}{% set d = decimals | int(1) %}{{ text_prefix }}{{ ((num | round(d) | int) if d == 0 else (num | round(d))) if num is not none else s }}{{ (' ' ~ unit) if (unit and num is not none) else '' }}
 
 triggers:
-  # Kein Minuten-Trigger: die Schleife startet nur beim (Neu-)Start ...
+  # Feuert jede Minute EINEN winzigen Check; angezeigt wird nur im Intervall (s. Bedingung).
+  - trigger: time_pattern
+    minutes: "/1"
+    id: tick
   - trigger: homeassistant
     event: start
-    id: start
-  # ... und nach jedem Neu-Laden/Speichern von Automationen.
-  - trigger: event
-    event_type: automation_reloaded
-    id: reloaded
+    id: ha_start
 
-conditions: []
+conditions:
+  # Anzeigen, wenn (a) Intervall erreicht ist, oder (b) HA-Start und gewünscht.
+  - condition: template
+    value_template: >-
+      {{ (trigger.id == 'ha_start' and show_on_start)
+         or (trigger.id == 'tick'
+             and (now().hour * 60 + now().minute) % (interval_minutes | int(30)) == 0) }}
 
 actions:
-  # Wenn kein Sofort-Einblenden gewünscht: erst ein Intervall warten
-  - if: "{{ not show_on_start }}"
-    then:
-      - delay:
-          seconds: "{{ (interval_minutes | int(30)) * 60 }}"
-  # Danach dauerhaft: einblenden -> zeigen -> entfernen -> bis zum nächsten Intervall schlafen
-  - repeat:
-      while: "{{ true }}"
-      sequence:
-        # 1) App mit aktuellem Wert anlegen (Sicherheits-Lifetime, falls das Entfernen ausfällt)
-        - action: mqtt.publish
-          data:
-            evaluate_payload: false
-            qos: 0
-            retain: false
-            topic: "{{ awtrix_prefix }}/cmd/apps/pushed/{{ awtrix_app }}"
-            payload: >-
-              {
-                "text": {{ display_text | string | tojson }},
-                {% if icon_id %}"icon": "{{ icon_id }}",
-                "iconMode": "{{ icon_mode }}",
-                {% endif %}"durationMs": {{ (disp_duration | int(8) + 10) * 1000 }},
-                "lifetimeMs": {{ (disp_duration | int(8) + 60) * 1000 }},
-                "textColor": {{ (text_color or [255,255,255]) | tojson }}
-              }
-        # 2) Sofort zur App springen, damit sie jetzt sichtbar ist
-        - action: mqtt.publish
-          data:
-            evaluate_payload: false
-            qos: 0
-            retain: false
-            topic: "{{ awtrix_prefix }}/cmd/apps/switch"
-            payload: '{"name": "{{ awtrix_app }}", "fast": true}'
-        # 3) Für die Anzeigedauer stehen lassen ...
-        - delay:
-            seconds: "{{ disp_duration | int(8) }}"
-        # 4) ... dann App wieder entfernen (leeres Payload = löschen)
-        - action: mqtt.publish
-          data:
-            evaluate_payload: false
-            qos: 0
-            retain: false
-            topic: "{{ awtrix_prefix }}/cmd/apps/pushed/{{ awtrix_app }}"
-            payload: ""
-        # 5) Bis zum nächsten Intervall schlafen (Intervall minus Anzeigedauer)
-        - delay:
-            seconds: "{{ [ (interval_minutes | int(30)) * 60 - (disp_duration | int(8)), 1 ] | max }}"
+  # 1) App mit aktuellem Wert anlegen (Sicherheits-Lifetime, falls Schritt 4 ausfällt)
+  - action: mqtt.publish
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      topic: "{{ awtrix_prefix }}/cmd/apps/pushed/{{ awtrix_app }}"
+      payload: >-
+        {
+          "text": {{ display_text | string | tojson }},
+          {% if icon_id %}"icon": "{{ icon_id }}",
+          "iconMode": "{{ icon_mode }}",
+          {% endif %}"durationMs": {{ (disp_duration | int(8) + 10) * 1000 }},
+          "lifetimeMs": {{ (disp_duration | int(8) + 60) * 1000 }},
+          "textColor": {{ (text_color or [255,255,255]) | tojson }}
+        }
+  # 2) Sofort zur App springen, damit sie jetzt sichtbar ist
+  - action: mqtt.publish
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      topic: "{{ awtrix_prefix }}/cmd/apps/switch"
+      payload: '{"name": "{{ awtrix_app }}", "fast": true}'
+  # 3) Für die Anzeigedauer stehen lassen ...
+  - delay:
+      seconds: "{{ disp_duration | int(8) }}"
+  # 4) ... dann App wieder entfernen (leeres Payload = löschen)
+  - action: mqtt.publish
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      topic: "{{ awtrix_prefix }}/cmd/apps/pushed/{{ awtrix_app }}"
+      payload: ""
