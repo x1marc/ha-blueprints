@@ -147,17 +147,29 @@ automatisch. Alles über Einstellungen konfigurierbar, kein Code nötig.
 
 **Funktionen**
 
-- **Trocken-Alarm** mit Grenzwert, Hysterese, Verzögerung und Cooldown-Schutz
+- **Trocken-Alarm** mit Grenzwert, Hysterese, Verzögerung und Sperrzeit
 - **OK-Rückmeldung** („Alles gut"), wenn die Feuchte wieder stabil ist
 - **Benachrichtigungskanäle** einzeln schaltbar: 📱 Mobile App (mehrere Geräte),
   📋 anhaltende HA-Benachrichtigung, 🔊 Alexa-Durchsage (mit Lautstärkesteuerung)
-- **Anwesenheitserkennung** – Alexa nur, wenn jemand zuhause ist
-- **Nachtmodus** pro Kanal (auch über Mitternacht) und **Urlaubs-/Pause-Modus**
-- **Automatisches Gießen** – Pumpe/Ventil mit Laufzeit & Sicherheitsabschaltung,
-  optional zeitplanbasiertes präventives Gießen
+- **Anwesenheitserkennung** – Alexa nur, wenn jemand zuhause ist (beliebige Zonen)
+- **Ruhezeit** pro Kanal (auch über Mitternacht) mit **Nachholung**: ein Alarm, der
+  in die Ruhezeit fällt, wird zum Ruhezeit-Ende zugestellt – auch nach HA-Neustart
+- **Urlaubs-/Pause-Modus** – stummschalten, Gießen läuft weiter
+- **Automatisches Gießen** – Pumpe/Ventil mit Laufzeit, Bewässerungs-Kontrolle und
+  **Not-Abschaltung** über einen eigenen Trigger; optional zeitplanbasiertes
+  präventives Gießen
+- **HA-Neustart-Prüfung** – ist die Pflanze beim Hochfahren bereits trocken, wird alarmiert
 
-**Voraussetzungen:** Bodenfeuchte-Sensor (%); optional Pumpe/Ventil (`switch.*`),
-Mobile-App-Benachrichtigung, Alexa
+> **Version 2.8 (2026-08-16) ist ein Pflicht-Update.** Die Versionen 2.6/2.7 wurden von
+> Home Assistant wegen eines Templates im `numeric_state`-Trigger komplett abgelehnt –
+> die Automation lief gar nicht. Zusätzlich behoben: verlorene Alarme während der
+> Ruhezeit, wirkungslose Alexa-Wiederholung, unter Umständen dauerhaft laufende Pumpe,
+> wirkungslose Sensorausfall-Toleranzzeit. Details im Changelog der Blueprint.
+> Nach dem Update **„Blueprint neu laden"** ausführen.
+
+**Voraussetzungen:** Home Assistant ≥ 2024.10, Bodenfeuchte-Sensor (%); optional
+Pumpe/Ventil (`switch.*` oder `input_boolean.*`), Mobile-App-Benachrichtigung, Alexa,
+`input_datetime`-Helfer (mit Datum + Uhrzeit) für eine exakte Sperrzeit
 
 [![In Home Assistant öffnen](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fx1marc%2Fha-blueprints%2Fblob%2Fmain%2FBodenfeuchte.yaml)
 
@@ -165,6 +177,7 @@ Mobile-App-Benachrichtigung, Alexa
 https://github.com/x1marc/ha-blueprints/blob/main/Bodenfeuchte.yaml
 ```
 
+---
 
 ## Installation & Updates
 

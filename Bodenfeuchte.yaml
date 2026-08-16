@@ -1,61 +1,254 @@
 blueprint:
-  name: "\U0001F331 Bodenfeuchte Alarm System"
-  description: "# \U0001F331 Bodenfeuchte Alarm System\n\n**Autor:** x1marc \u2003
-    **Version:** 2.7 \u2003 **Letzte \u00c4nderung:** 2026-05-21\n\n---\n\n## Was
-    macht dieser Blueprint?\n\nDieser Blueprint \u00fcberwacht einen Bodenfeuchte-Sensor
-    in Innenr\u00e4umen und benachrichtigt dich zuverl\u00e4ssig, sobald deine Pflanze
-    Wasser braucht \u2013 und wieder, wenn sie gut versorgt ist.\n\nDu musst nichts
-    programmieren. Alles wird \u00fcber einfache Einstellungen konfiguriert.\n\n---\n\n##
-    \U0001F4CB Funktions\u00fcbersicht\n\n<details>\n<summary><b>\U0001F335 Trocken-Alarm</b>
-    \u2013 Wann wird gewarnt?</summary>\n\nDer Blueprint l\u00f6st einen Alarm aus,
-    sobald der Sensorwert f\u00fcr eine einstellbare Zeit **unterhalb des Grenzwerts**
-    liegt.\n\n- **Grenzwert** frei einstellbar (Standard: 50\u00a0%)\n- **Hysterese**
-    verhindert Fehlalarme bei schwankendem Sensor (z.\u00a0B. kurz nach dem Gie\u00dfen)\n-
-    **Verz\u00f6gerung** vor Ausl\u00f6sung \u2013 kein Alarm bei kurzen Ausrei\u00dfern\n-
-    **Einmalig oder wiederholt** senden \u2013 Wiederholung gilt **nur f\u00fcr Alexa** (Mobile & HA werden immer einmalig gesendet)\n-
-    **Cooldown-Schutz** verhindert, dass innerhalb kurzer Zeit mehrfach gewarnt wird\n\n</details>\n\n<details>\n<summary><b>\U0001F33F
-    OK-R\u00fcckmeldung</b> \u2013 Entwarnung automatisch senden</summary>\n\nSobald
-    die Feuchte stabil \u00fcber dem Grenzwert liegt, kann optional eine \"Alles gut\"-Meldung
-    gesendet werden.\n\n- Global ein- oder ausschaltbar\n- Separat pro Benachrichtigungskanal
-    steuerbar\n- Verz\u00f6gerung einstellbar, um direktes Zur\u00fcckspringen zu
-    vermeiden\n\n</details>\n\n<details>\n<summary><b>\U0001F514 Benachrichtigungskan\u00e4le</b>
-    \u2013 Wer soll informiert werden?</summary>\n\nDu kannst jeden Kanal unabh\u00e4ngig
-    f\u00fcr Trocken-Alarm und OK-Info ein- oder ausschalten:\n\n| Kanal | Trocken
-    | OK |\n|---|---|---|\n| \U0001F4F1 Mobile App (mehrere Ger\u00e4te m\u00f6glich)
-    | \u2713 | \u2713 |\n| \U0001F4CB Anhaltende HA-Benachrichtigung | \u2713 | \u2713
-    |\n| \U0001F50A Alexa-Durchsage | \u2713 | \u2713 |\n\n**Mobile:** Bis zu mehreren
-    Ger\u00e4ten gleichzeitig \u2013 einfach im Dropdown ausw\u00e4hlen.\n**Alexa:**
-    Mehrere Lautsprecher gleichzeitig m\u00f6glich. Lautst\u00e4rke kann vor der Durchsage
-    tempor\u00e4r gesetzt und danach wiederhergestellt werden.\n\n</details>\n\n<details>\n<summary><b>\U0001F4CD
-    Anwesenheitserkennung</b> \u2013 Alexa nur bei Anwesenheit</summary>\n\nAlexa-Durchsagen
-    erfolgen nur, wenn sich eine ausgew\u00e4hlte Person oder ein Ger\u00e4te-Tracker
-    in einer bestimmten Zone befindet (Standard: `zone.home`).\n\n- Unterst\u00fctzt
-    `person.*` und `device_tracker.*`\n- Zone frei w\u00e4hlbar\n\n</details>\n\n<details>\n<summary><b>\U0001F319
-    Nachtmodus</b> \u2013 Keine St\u00f6rungen zur Unzeit</summary>\n\nF\u00fcr jeden
-    Kanal kann ein eigener Nachtmodus mit Start- und Endzeit definiert werden. W\u00e4hrend
-    der Nachtzeit wird der jeweilige Kanal stummgeschaltet.\n\n- Separater Nachtmodus
-    f\u00fcr Alexa, Mobile App und Anhaltende Benachrichtigung\n- Funktioniert korrekt
-    \u00fcber Mitternacht hinweg (z.\u00a0B. 22:00\u202f\u2013\u202f07:00)\n\n</details>\n\n<details>\n<summary><b>\U0001F3D6\uFE0F
-    Urlaubs-/Pause-Modus</b> \u2013 Tempor\u00e4r alle Alarme stummschalten</summary>\n\nMit
-    einem einfachen Ein/Aus-Schalter (input_boolean) k\u00f6nnen alle Alarme pausiert
-    werden \u2013 ohne die Automation zu \u00e4ndern.\n\n- Kein Alarm wird gesendet,
-    solange der Pause-Schalter aktiv ist\n- Sensorausfall-Erkennung l\u00e4uft weiter\n\n</details>\n\n<details>\n<summary><b>\U0001F6A8
-    Sensorausfall-Erkennung</b> \u2013 Alarm wenn Sensor keine Daten liefert</summary>\n\nWenn
-    der Sensor l\u00e4nger als eine einstellbare Zeit keinen g\u00fcltigen Wert liefert
-    (unavailable / unknown), wird eine separate Warnung gesendet.\n\n- Einstellbare
-    Toleranzzeit (Standard: 2 Stunden)\n- Separate Benachrichtigungsnachricht\n- Kann
-    unabh\u00e4ngig aktiviert werden\n\n</details>\n\n<details>\n<summary><b>\U0001F4C5
-    Wochentag-Filter</b> \u2013 Alarme nur an bestimmten Tagen</summary>\n\nAlarm-Benachrichtigungen
-    k\u00f6nnen auf ausgew\u00e4hlte Wochentage begrenzt werden (z.\u00a0B. nur Mo\u2013Fr
-    oder nur Wochenende).\n\n- Mehrfachauswahl der Wochentage\n- Gilt f\u00fcr alle
-    Kan\u00e4le gleichzeitig\n\n</details>\n\n---\n\n## \U0001F4D3 Changelog\n\n<details>\n<summary><b>v2.7</b> – 2026-05-21 – Ruhezeit-Puffer abgesichert</summary>\n\n**Behoben:**\n- Bug: Gepufferte Alarme während der Ruhezeit gingen verloren wenn der Timeout (14 h) ablief, bevor die Ruhezeit endete – Timeout auf 24 h erhöht, `continue_on_timeout: true` damit kein Alarm verloren geht\n- Bug: Bei Timeout konnte Benachrichtigung außerhalb der Ruhezeit gesendet werden – zusätzliche `not (in_quiet_*)` Bedingung nach dem Wait verhindert das für alle drei Dry-Alarm-Kanäle\n\n</details>\n\n<details>\n<summary><b>v2.6</b> – 2026-05-21 – Bugfixes</summary>\n\n**Behoben:**\n- Bug: OK-Trigger feuerte bei `threshold_low` statt `thr_ok` (Grenzwert + Hysterese) – mit `mode: restart` wurden laufende Alexa-Schleifen und Ruhezeit-Warteblöcke zu früh unterbrochen\n- Bug: `auto_water_safety_timeout` hatte durch `| min` keine Wirkung wenn größer als `auto_water_duration` (empfohlene Konfiguration) – Timeout nutzt jetzt direkt `auto_water_duration`, gilt für alle Pump-Durchgänge und Zeitplan\n- Bug: Planmäßiges Gießen wurde im Pause-Modus komplett blockiert (inkl. Pumpe) – Pumpe läuft jetzt auch im Pause-Modus, nur die Alexa-Bestätigung wird unterdrückt\n\n</details>\n\n<details>\n<summary><b>v2.5</b> \u2013 2025-05-19 \u2013 Felder neu geordnet & Beschreibungen</summary>\n\n**Ge\u00e4ndert:**\n- Alle Eingabefelder logisch gruppiert: Pflanze/Sensor, Bew\u00e4sserung (Alarm), Bew\u00e4sserung (Zeitplan), Alarm-Verhalten, Nachrichten, Alexa, Mobile App, HA-Benachrichtigung, Sensorausfall, Urlaubs-Modus\n- Beschreibungen erg\u00e4nzt und pr\u00e4zisiert\n- Tippfehler \"seperat\" \u2192 \"separat\" behoben\n\n</details>\n\n<details>\n<summary><b>v2.4</b> \u2013 2025-05-19 \u2013 Logik-Fixes</summary>\n\n**Behoben:**\n- Bug: Planm\u00e4\u00dfiges Gie\u00dfen nutzte delay: statt wait_for_trigger \u2013 Pumpe lief immer volle Zeit, kein Safety-Timeout\n- Bug: mode: restart konnte Pumpe offen lassen wenn dry-Trigger w\u00e4hrend Zeitplan feuerte \u2013 wait_for_trigger sch\u00fctzt davor (turn_off kommt direkt danach)\n- Warnung: zone_slug Variable entfernt (Überbleibsel, nie verwendet)\n- Warnung: can_send_dry_now Variable entfernt (ungenutzt)\n- Warnung: Pumpenfehler-Alarm ignoriert bewusst Ruhezeiten (kritischer Alarm) \u2013 Kommentar im Code erg\u00e4nzt\n\n</details>\n\n<details>\n<summary><b>v2.3</b> \u2013 2025-05-19 \u2013 Planm\u00e4\u00dfiges Gie\u00dfen</summary>\n\n**Neu:**\n- \u23F0 T\u00e4gliche Bewässerung zur eingestellten Uhrzeit\n- Optionaler Sensor-Check: nur gie\u00dfen wenn Feuchte unter Schwellenwert\n- Eigene Pumpen-Laufzeit und eigener Schwellenwert (unabh\u00e4ngig vom Alarm-Grenzwert)\n- Alexa-Best\u00e4tigung nach planm\u00e4\u00dfiger Bew\u00e4sserung\n- Pause-Modus unterdr\u00fcckt auch planm\u00e4\u00dfiges Gie\u00dfen nicht (Pflanze wird immer versorgt)\n\n</details>\n\n<details>\n<summary><b>v2.2</b> \u2013 2025-05-19 \u2013 Bew\u00e4sserungs-Kontrolle</summary>\n\n**Neu:**\n- \U0001F501 Bew\u00e4sserungs-Kontrolle: pr\u00fcft nach dem Gie\u00dfen ob der Sensor gestiegen ist\n- Zwei Optionen bei Misserfolg: \"Erneut gie\u00dfen\" (2. Pumpen-Durchgang) oder \"Sofort Alarm senden\"\n- Wartezeit konfigurierbar damit Wasser einsickern kann (Standard: 60s)\n- Fehler-Alarm per Mobile App, HA-Benachrichtigung und Alexa\n- Nach automatischem Gie\u00dfen (Kontrolle aktiv): keine doppelten Normal-Alarme\n\n</details>\n\n<details>\n<summary><b>v2.1</b> \u2013 2025-05-19 \u2013 Snooze-Button</summary>\n\n**Neu:**\n- \U0001F634 Snooze-Button in Push-Benachrichtigung: \"Sp\u00e4ter erinnern\" verz\u00f6gert die Erinnerung um eine konfigurierbare Zeit\n- Snooze-Dauer einstellbar (5\u2013480 Minuten, Standard 2 Stunden)\n- Wenn Pflanze w\u00e4hrend Snooze gegossen wird, entf\u00e4llt die Erinnerung\n- Beide Buttons (\"Als gegossen markieren\" + \"Sp\u00e4ter erinnern\") in allen Mobile-Benachrichtigungen\n\n</details>\n\n<details>\n<summary><b>v2.0</b> \u2013 2025-05-19 \u2013 Pause-Modus nur f\u00fcr Benachrichtigungen</summary>\n\n**Ge\u00e4ndert:**\n- Pause-/Urlaubs-Modus unterdr\u00fcckt jetzt nur Benachrichtigungen (Alexa, Mobile, HA)\n- Automatisches Gie\u00dfen l\u00e4uft auch im Pause-Modus weiter \u2013 die Pflanze wird versorgt\n- is_paused wird nun in jedem Benachrichtigungs-Block einzeln gepr\u00fcft statt die gesamte Sequenz zu blockieren\n\n</details>\n\n<details>\n<summary><b>v1.9.2</b> \u2013 2025-05-19 \u2013 Optionale Felder: null-Default</summary>\n\n**Behoben:**\n- Optionale Entity/Device-Felder nutzen jetzt default: null \u2013 HA akzeptiert null ohne Validierungsfehler (leerer String und [] wurden abgelehnt)\n- Null-Guards in allen Templates erg\u00e4nzt\n\n</details>\n\n<details>\n<summary><b>v1.9.1</b> \u2013 2025-05-19 \u2013 Optionale Felder Fix</summary>\n\n**Behoben:**\n- Fehlermeldung \"Missing input\" beim Speichern: optionale Entity-Felder brauchen einen leeren Default\n- Einzelne Entity-Felder: default: \"\u201c (leerer String)\n- Mehrfach-Entity / Device-Felder: default: [] (leere Liste)\n- person_in_zone: wenn presence_entity leer \u2192 Alexa spricht immer (kein Anwesenheitscheck)\n\n</details>\n\n<details>\n<summary><b>v1.9</b> \u2013 2025-05-19 \u2013 Bugfixes default: false</summary>\n\n**Behoben:**\n- Bug: plant_name, pause_mode_entity, auto_water_switch, alexa_targets, mobile_device hatten default: false \u2013 false (boolean) statt leerem Feld verursachte Laufzeitfehler und stille Ausf\u00e4lle\n- Bug: is_paused rief states(false) auf wenn kein Pause-Entity gesetzt\n- Bug: auto_water action pr\u00fcfte nicht ob Switch g\u00fcltig ist\n- Bug: mobile_notify_services iterierte \u00fcber Buchstaben von \"False\" (boolean is iterable in Jinja2)\n- Bug: alexa_targets=false \u00fcbergab Buchstaben \"F\",\"a\",\"l\",\"s\",\"e\" als Alexa-Targets\n- Warnung: Tippfehler \"zus\u00e4zzlich\" behoben\n- Warnung: Description Trocken-Alarm aktualisiert (Wiederholung nur f\u00fcr Alexa)\n\n**Ge\u00e4ndert:**\n- Optionale Entity-Felder haben jetzt kein default mehr \u2013 HA zeigt sie als optional an\n- Neue Variable alexa_targets_safe normalisiert false/none zu leerer Liste\n\n</details>\n\n<details>\n<summary><b>v1.8</b> \u2013 2025-05-19 \u2013 Automatisches Gie\u00dfen</summary>\n\n**Neu:**\n- \U0001F6AA Automatisches Gie\u00dfen: optionale Pumpen-/Ventilsteuerung beim Trocken-Alarm\n- Pumpe schaltet automatisch nach eingestellter Laufzeit ab\n- Sicherheits-Timeout als zus\u00e4tzliche Notbremse\n- Wenn Pumpe die Pflanze erfolgreich bew\u00e4ssert, entfallen Alarm-Benachrichtigungen\n- Struktur analog zum Urlaubs-/Pause-Modus: erst aktivieren, dann Ger\u00e4t w\u00e4hlen\n\n</details>\n\n<details>\n<summary><b>v1.7</b> \u2013 2025-05-19 \u2013 Wiederholung & Ruhezeit-Puffer</summary>\n\n**Neu:**\n- Alarm-Wiederholung gilt jetzt nur noch f\u00fcr Alexa \u2013 Mobile & HA werden einmalig gesendet\n- Nachrichten-Zwischenspeicher: Alarme w\u00e4hrend Ruhezeit werden nach Ruhezeit-Ende zugestellt (wenn Pflanze noch trocken)\n- Gilt f\u00fcr alle drei Kan\u00e4le separat\n\n**\u00dcbernommen (deine \u00c4nderungen):**\n- Pflanzenname-Standard: Monstera\n- Alexa-Einleitung: Hinweis:\n- Sensorausfall max. 24h, Wiederholintervall max. 300 min\n- Mobile App + Ruhezeiten standardm\u00e4\u00dfig aktiv\n\n</details>\n\n<details>\n<summary><b>v1.6</b> \u2013 2025-05-19 \u2013 Mobile OK-Benachrichtigung</summary>\n\n**Ge\u00e4ndert:**\n- Alexa-Ansagetext Trocken-Alarm: Standard-Text k\u00fcrzer (Pflanzenname wird automatisch erg\u00e4nzt)\n\n**Behoben:**\n- Bug: tag-Parameter in OK-, Sensorausfall- und Clear-Benachrichtigungen war auf falscher data-Ebene \u2013 Mobile-App-Benachrichtigungen konnten nicht ankommen\n\n**Hinweis:**\n- Wer die Automation vor v1.5 erstellt hat: App-Benachrichtigung \u2013 Entwarnung aktiv manuell auf EIN setzen\n\n</details>\n\n<details>\n<summary><b>v1.5</b> \u2013 2025-05-19 \u2013 Kritischer Bugfix</summary>\n\n**Behoben:**\n- Kritischer Bug: person\_in\_zone fehlte komplett im variables-Block \u2013 Alexa hat nie gesprochen\n- Bug: Doppelter data:-Key in Sensorausfall- und Aktions-Button-Benachrichtigungen\n\n</details>\n\n<details>\n<summary><b>v1.4</b> \u2013 2025-05-19 \u2013 Tiefes Debugging</summary>\n\n**Behoben:**\n- Bug: Alte person_in_zone \u00fcberschrieb neue Multi-Zonen-Logik\n- Bug: Aktions-Button Event-Action stimmte nie \u00fcberein\n- Bug: Doppelter data:-Key in Mobile-Benachrichtigungen\n- Bug: is_paused warf Fehler wenn pause_mode_enabled=false\n- Bug: OK-Trigger above: akzeptiert kein Template (HA-Einschr\u00e4nkung)\n- Warnung: thr_ok wird jetzt gerundet\n\n</details>\n\n<details>\n<summary><b>v1.3</b> \u2013 2025-05-19 \u2013 Mehrere Personen & Zonen</summary>\n\n**Neu:**\n- \U0001F4CD Anwesenheitserkennung unterst\u00fctzt mehrere Personen / Ger\u00e4te\n- \U0001F3E0 Anwesenheitserkennung unterst\u00fctzt mehrere Zonen\n- Logik: Alexa spricht wenn mindestens eine Person in mindestens einer Zone ist\n\n</details>\n\n<details>\n<summary><b>v1.2</b> \u2013 2025-05-19 \u2013 Neue Features</summary>\n\n**Neu:**\n- \U0001F3D6\ufe0f Urlaubs-/Pause-Modus\n- \U0001F6A8 Sensorausfall-Erkennung\n- \U0001F4C5 Wochentag-Filter\n- \U0001F4F1 Aktions-Button: Als gegossen markieren\n- \U0001F50A Alexa-Anrede konfigurierbar\n- \U0001F331 Pflanzennamen als eigenes Eingabefeld\n\n</details>\n\n<details>\n<summary><b>v1.1</b> \u2013 2025-05-19 \u2013 Deutsche Feldbeschriftungen</summary>\n\n**Ge\u00e4ndert:**\n- Alle Eingabefelder vollst\u00e4ndig auf Deutsch umbenannt\n- Klare Benennung ohne technische Abk\u00fcrzungen\n- Hilfetexte bei allen Feldern erg\u00e4nzt\n\n</details>\n\n<details>\n<summary><b>v1.0</b> \u2013 2025-05-19 \u2013 Erste stabile Ver\u00f6ffentlichung</summary>\n\n**Neu:**\n- Vollst\u00e4ndige Erstimplementierung\n- Trocken-Alarm mit Grenzwert, Hysterese, Verz\u00f6gerung, Cooldown\n- OK-R\u00fcckmeldung optional aktivierbar, separat pro Kanal\n- Drei Kan\u00e4le: Alexa, Mobile App, Anhaltende Benachrichtigung\n- Mobile App: Mehrere Ger\u00e4te gleichzeitig\n- Alexa: Mehrere Lautsprecher, tempor\u00e4re Lautst\u00e4rkesteuerung\n- Anwesenheitserkennung f\u00fcr Alexa mit Zonen\n- Getrennter Nachtmodus pro Kanal, Mitternacht-\u00fcbergreifend\n- Hysterese im OK-Trigger korrekt ber\u00fccksichtigt\n- Eindeutige Persistent-Notification-ID pro Sensor\n- Automatisches Dismiss bei OK-R\u00fcckmeldung\n- Sensor-Frischlesungen in Nachrichten\n\n</details>\n"
+  name: "🌱 Bodenfeuchte Alarm System"
   domain: automation
+  homeassistant:
+    min_version: "2024.10.0"
+  description: |
+    # 🌱 Bodenfeuchte Alarm System
+
+    **Autor:** x1marc &emsp; **Version:** 2.8 &emsp; **Letzte Änderung:** 2026-08-16
+
+    ---
+
+    ## Was macht dieser Blueprint?
+
+    Überwacht einen Bodenfeuchte-Sensor und benachrichtigt zuverlässig, sobald die
+    Pflanze Wasser braucht – und wieder, wenn sie versorgt ist. Optional gießt er
+    automatisch. Alles über Einstellungen konfigurierbar, kein Code nötig.
+
+    ---
+
+    ## 📋 Funktionsübersicht
+
+    <details>
+    <summary><b>🌵 Trocken-Alarm</b> – Wann wird gewarnt?</summary>
+
+    Alarm, sobald der Sensorwert für eine einstellbare Zeit **unter dem Grenzwert** liegt.
+
+    - **Grenzwert** frei einstellbar (Standard: 50 %)
+    - **Hysterese** verhindert Fehlalarme bei schwankendem Sensor
+    - **Verzögerung** vor Auslösung – kein Alarm bei kurzen Ausreißern
+    - **Einmalig oder wiederholt** – Wiederholung gilt nur für Alexa
+    - **Sperrzeit** verhindert Mehrfachwarnungen in kurzer Zeit
+    - **Nach HA-Neustart** wird geprüft, ob die Pflanze bereits trocken ist
+
+    </details>
+
+    <details>
+    <summary><b>🌿 OK-Rückmeldung</b> – Entwarnung automatisch senden</summary>
+
+    Sobald die Feuchte stabil über dem OK-Wert (Grenzwert + Hysterese) liegt, kann
+    optional eine „Alles gut"-Meldung gesendet werden. Global und pro Kanal schaltbar.
+
+    </details>
+
+    <details>
+    <summary><b>🔔 Benachrichtigungskanäle</b></summary>
+
+    | Kanal | Trocken | OK |
+    |---|---|---|
+    | 📱 Mobile App (mehrere Geräte) | ✓ | ✓ |
+    | 📋 Anhaltende HA-Benachrichtigung | ✓ | ✓ |
+    | 🔊 Alexa-Durchsage | ✓ | ✓ |
+
+    **Alexa:** mehrere Lautsprecher, Lautstärke temporär setzbar und danach wiederherstellbar.
+
+    </details>
+
+    <details>
+    <summary><b>📍 Anwesenheitserkennung</b> – Alexa nur bei Anwesenheit</summary>
+
+    Alexa spricht nur, wenn mindestens eine gewählte Person / ein Gerätetracker in
+    mindestens einer gewählten Zone ist. Unterstützt `person.*` und `device_tracker.*`.
+    Verglichen wird sowohl gegen den Zonen-Namen als auch gegen die Zonen-ID –
+    dadurch funktionieren auch andere Zonen als `zone.home`.
+
+    </details>
+
+    <details>
+    <summary><b>🌙 Ruhezeit</b> – Keine Störungen zur Unzeit</summary>
+
+    Pro Kanal eine eigene Ruhezeit, korrekt über Mitternacht hinweg.
+    **Nachholung:** Fällt ein Alarm in die Ruhezeit, wird er zum Ruhezeit-Ende
+    nachgeholt – sofern die Pflanze dann noch trocken ist. Das läuft über eigene
+    Zeit-Trigger und übersteht daher auch einen HA-Neustart.
+
+    </details>
+
+    <details>
+    <summary><b>🏖️ Urlaubs-/Pause-Modus</b></summary>
+
+    Ein `input_boolean` schaltet alle Benachrichtigungen stumm – Trocken-Alarm **und**
+    Entwarnung. Automatisches und planmäßiges Gießen laufen weiter, die Pflanze wird
+    also auch im Urlaub versorgt.
+
+    </details>
+
+    <details>
+    <summary><b>🚨 Sensorausfall-Erkennung</b></summary>
+
+    Separate Warnung, wenn der Sensor länger als die eingestellte Toleranzzeit
+    `unavailable` oder `unknown` ist.
+
+    </details>
+
+    <details>
+    <summary><b>🪣 Bewässerung</b> – automatisch & planmäßig</summary>
+
+    - Pumpe/Ventil beim Trocken-Alarm mit eigener Laufzeit
+    - Bewässerungs-Kontrolle: prüft, ob der Sensor danach gestiegen ist
+      (bei Misserfolg: 2. Durchgang oder sofortiger Fehler-Alarm)
+    - Täglich planmäßiges Gießen zur Wunschzeit, optional mit eigenem Schwellenwert
+    - **Not-Abschaltung:** Ein eigener Trigger schaltet die Pumpe nach dem
+      Sicherheits-Timeout ab – unabhängig davon, was die Automation gerade macht.
+
+    </details>
+
+    <details>
+    <summary><b>📅 Wochentag-Filter</b></summary>
+
+    Begrenzt die Benachrichtigungen auf ausgewählte Wochentage. Das Gießen läuft an
+    allen Tagen weiter.
+
+    </details>
+
+    ---
+
+    ## 📓 Changelog
+
+    <details>
+    <summary><b>v2.8</b> – 2026-08-16 – Grosses Debugging-Release</summary>
+
+    **Behoben (kritisch):**
+    - Bug: Der OK-Trigger nutzte `above: "{{ thr_ok }}"`. Der `numeric_state`-Trigger
+      akzeptiert dort kein Template – die **komplette Automation wurde von HA
+      abgelehnt und lief gar nicht**. Ersetzt durch einen Template-Trigger.
+    - Bug: `variables:` werden von HA nur **einmal** beim Auslösen berechnet. Dadurch
+      war die Prüfung `not (in_quiet_*)` nach dem Ruhezeit-Warteblock immer falsch –
+      **jeder Alarm während der Ruhezeit ging auf allen drei Kanälen verloren.**
+      Ruhezeit-Nachholung läuft jetzt über eigene Zeit-Trigger.
+    - Bug: `can_send_alexa_now` wurde als `wait_for_trigger`-Template benutzt. Ein
+      Template ohne Entity-Bezug feuert nie → die Alexa-Wiederholung lief 12 h ins
+      Timeout und sagte nichts an. Alle Live-Werte werden jetzt pro Schleifendurchlauf
+      neu berechnet.
+    - Bug: `mode: restart` + 6 Trigger konnte die Pumpe zwischen Ein- und Ausschalten
+      abbrechen → **Pumpe blieb an**. Jetzt `mode: parallel` plus eigener
+      Not-Abschalt-Trigger auf dem Pumpen-Switch.
+    - Bug: `auto_water_safety_timeout` war nirgends im Ablauf verwendet – der
+      Sicherheits-Timeout tat nichts. Er steuert jetzt die Not-Abschaltung.
+    - Bug: `sensor_failure_hours` stand nicht in `trigger_variables` und war im Trigger
+      undefiniert → die Toleranzzeit war **immer 2 h**, der Schieberegler wirkungslos.
+
+    **Behoben (weitere):**
+    - `switch.turn_on/off` scheiterte, wenn ein `input_boolean` als Pumpe gewählt war →
+      jetzt `homeassistant.turn_on/off`.
+    - Sperrzeit und Wochentag-Filter blockierten auch das automatische Gießen,
+      obwohl die Beschreibung das Gegenteil sagt. Beide gelten jetzt nur noch für
+      Benachrichtigungen.
+    - Die Entwarnung prüfte den Pause-Modus nicht – im Urlaub kamen weiterhin
+      „Alles gut"-Meldungen.
+    - `source_url` zeigte auf ein nicht existierendes Repository (404) – „Blueprint
+      neu laden" und Update-Prüfung schlugen fehl.
+    - Anwesenheitserkennung verglich nur die Zonen-ID. Personen melden aber den
+      Zonen-**Namen** → andere Zonen als `zone.home` trafen nie zu.
+    - Planmäßiges Gießen stoppte beim Alarm-OK-Wert statt beim Zeitplan-Schwellenwert –
+      präventives Gießen erreichte sein Ziel nie.
+    - Nachrichten zeigten den beim Auslösen eingefrorenen Messwert; jetzt wird der
+      Sensor beim Senden frisch gelesen.
+    - Sinnloser 24-h-Warteblock am Ende des Einmal-Modus entfernt.
+    - Ruhezeit-Endzeiten in den Standardwerten sind jetzt quotiert (YAML 1.1 hätte
+      z. B. `20:00:00` als Zahl 72000 gelesen).
+
+    **Neu:**
+    - Trigger bei HA-Start: ist die Pflanze beim Hochfahren bereits trocken, wird
+      alarmiert (`numeric_state` feuert nur beim Unterschreiten).
+    - Optionaler Sperrzeit-Speicher (`input_datetime`): macht die Sperrzeit exakt,
+      statt sich auf die letzte Ausführung der Automation zu verlassen.
+    - Die Alexa-Wiederholschleife wacht bei Ruhezeit-Ende und bei Druck auf einen
+      Benachrichtigungs-Button auf.
+
+    </details>
+
+    <details>
+    <summary><b>v2.7</b> – 2026-05-21 – Ruhezeit-Puffer abgesichert</summary>
+
+    - Timeout des Ruhezeit-Puffers auf 24 h erhöht, `continue_on_timeout: true`
+    - Zusätzliche `not (in_quiet_*)`-Bedingung nach dem Warten
+      *(diese Änderung war der Auslöser des in v2.8 behobenen Totalausfalls)*
+
+    </details>
+
+    <details>
+    <summary><b>v2.6</b> – 2026-05-21 – Bugfixes</summary>
+
+    - OK-Trigger auf `thr_ok` statt `threshold_low` umgestellt
+    - `auto_water_safety_timeout` aus dem Ablauf entfernt
+    - Planmäßiges Gießen läuft auch im Pause-Modus
+
+    </details>
+
+    <details>
+    <summary><b>v2.5</b> – 2025-05-19 – Felder neu geordnet & Beschreibungen</summary>
+
+    - Alle Eingabefelder logisch gruppiert, Beschreibungen ergänzt und präzisiert
+
+    </details>
+
+    <details>
+    <summary><b>v2.4</b> – 2025-05-19 – Logik-Fixes</summary>
+
+    - Planmäßiges Gießen nutzt `wait_for_trigger` statt `delay`
+    - Ungenutzte Variablen `zone_slug` und `can_send_dry_now` entfernt
+
+    </details>
+
+    <details>
+    <summary><b>v2.3</b> – 2025-05-19 – Planmäßiges Gießen</summary>
+
+    - Tägliche Bewässerung zur eingestellten Uhrzeit, optionaler Sensor-Check,
+      eigene Laufzeit und eigener Schwellenwert, Alexa-Bestätigung
+
+    </details>
+
+    <details>
+    <summary><b>v2.2</b> – 2025-05-19 – Bewässerungs-Kontrolle</summary>
+
+    - Prüfung nach dem Gießen, „Erneut gießen" oder „Sofort Alarm senden",
+      Fehler-Alarm über alle Kanäle
+
+    </details>
+
+    <details>
+    <summary><b>v2.1</b> – 2025-05-19 – Snooze-Button</summary>
+
+    - „Später erinnern" in der Push-Benachrichtigung, Dauer 5–480 Minuten
+
+    </details>
+
+    <details>
+    <summary><b>v2.0</b> – 2025-05-19 – Pause-Modus nur für Benachrichtigungen</summary>
+
+    - Automatisches Gießen läuft im Pause-Modus weiter
+
+    </details>
+
+    <details>
+    <summary><b>v1.0 – v1.9.2</b> – 2025-05-19 – Grundfunktionen</summary>
+
+    - Erstimplementierung: Trocken-Alarm, Entwarnung, drei Kanäle, Ruhezeiten,
+      Anwesenheitserkennung, Urlaubs-Modus, Sensorausfall-Erkennung, Wochentag-Filter,
+      Aktions-Buttons, automatisches Gießen
+    - Zahlreiche Fixes an optionalen Feldern (`default: null`), Null-Guards,
+      Multi-Personen-/Multi-Zonen-Anwesenheit, `tag`-Ebene in Mobile-Benachrichtigungen
+
+    </details>
+
   input:
 
     # ─── 🌱 PFLANZE & SENSOR
 
     plant_name:
-      name: "\U0001F331 Pflanzenname"
+      name: "🌱 Pflanzenname"
       description: >
         Frei wählbarer Name deiner Pflanze (z. B. „Monstera", „Küchenkräuter", „Balkonkasten").
         Dieser Name wird in allen Benachrichtigungen und Ansagen verwendet.
@@ -66,7 +259,7 @@ blueprint:
           multiple: false
 
     moisture_sensor:
-      name: "\U0001F4A7 Bodenfeuchte-Sensor"
+      name: "💧 Bodenfeuchte-Sensor"
       description: Wähle den Sensor aus, der die Bodenfeuchte deiner Pflanze misst (in Prozent).
       selector:
         entity:
@@ -77,7 +270,7 @@ blueprint:
           reorder: false
 
     threshold_low:
-      name: "\U0001F534 Trocken-Grenzwert (%)"
+      name: "🔴 Trocken-Grenzwert (%)"
       description: >-
         Fällt die Feuchte dauerhaft unter diesen Wert, wird ein Alarm ausgelöst.
         Empfehlung je nach Pflanze: 30–60 %.
@@ -92,7 +285,7 @@ blueprint:
           unit_of_measurement: '%'
 
     hysteresis:
-      name: "\U0001F53C Hysterese – Puffer gegen Fehlalarme (%)"
+      name: "🔼 Hysterese – Puffer gegen Fehlalarme (%)"
       description: >
         Schutzpuffer oberhalb des Grenzwerts. „Wieder OK" gilt erst ab: Grenzwert + Hysterese.
         Beispiel: Grenzwert 40 %, Hysterese 5 % → OK-Meldung erst ab 45 %.
@@ -107,7 +300,7 @@ blueprint:
           mode: slider
 
     below_for:
-      name: "\u23F1\uFE0F Mindestdauer Trocken-Zustand"
+      name: "⏱️ Mindestdauer Trocken-Zustand"
       description: Wie lange muss die Feuchte unter dem Grenzwert liegen, bevor der Alarm ausgelöst wird? Verhindert Fehlalarme durch kurze Ausreißer.
       default:
         minutes: 5
@@ -115,7 +308,7 @@ blueprint:
         duration: {}
 
     ok_for:
-      name: "\u23F1\uFE0F Mindestdauer Feucht-Zustand (für OK-Meldung)"
+      name: "⏱️ Mindestdauer Feucht-Zustand (für OK-Meldung)"
       description: Wie lange muss die Feuchte stabil über dem OK-Wert liegen, bevor eine Entwarnung gesendet wird?
       default:
         minutes: 2
@@ -125,7 +318,7 @@ blueprint:
     # ─── 🪣 BEWÄSSERUNG – AUTOMATISCH (bei Alarm)
 
     auto_water_enabled:
-      name: "\U0001F6AA Automatisches Gießen aktivieren?"
+      name: "🚪 Automatisches Gießen aktivieren?"
       description: >
         Wenn aktiviert, wird beim Trocken-Alarm automatisch eine Pumpe oder ein
         Ventil eingeschaltet. Die Pumpe läuft für die eingestellte Dauer und schaltet
@@ -139,7 +332,7 @@ blueprint:
         boolean: {}
 
     auto_water_switch:
-      name: "\U0001F6AA Pumpe / Ventil (Switch)"
+      name: "🚪 Pumpe / Ventil (Switch)"
       description: >
         Wähle den Switch aus, der die Bewässerungspumpe oder das Magnetventil steuert.
         Wird beim Trocken-Alarm eingeschaltet und nach der Laufzeit automatisch abgeschaltet.
@@ -153,7 +346,7 @@ blueprint:
           multiple: false
 
     auto_water_duration:
-      name: "\u23F1\uFE0F Pumpen-Laufzeit (Sekunden)"
+      name: "⏱️ Pumpen-Laufzeit (Sekunden)"
       description: >
         Wie lange soll die Pumpe / das Ventil laufen?
         Die Pumpe wird spätestens nach dieser Zeit abgeschaltet.
@@ -168,11 +361,16 @@ blueprint:
           mode: slider
 
     auto_water_safety_timeout:
-      name: "\U0001F6D1 Sicherheits-Timeout (Sekunden)"
+      name: "🛑 Sicherheits-Timeout (Sekunden)"
       description: >
-        Maximale Pumpen-Laufzeit als Sicherheitsnetz – auch wenn die Automation
-        einen Fehler hat. Empfehlung: 2–3× die normale Laufzeit.
-        Die Pumpe wird IMMER nach dieser Zeit abgeschaltet.
+        Not-Abschaltung: Läuft die Pumpe länger als diese Zeit am Stück, wird sie
+        über einen eigenen Trigger zwangsweise abgeschaltet – unabhängig davon, was
+        die Automation gerade tut. Das greift auch, wenn der Ablauf abgebrochen wurde
+        oder die Pumpe von Hand eingeschaltet wurde.
+        Empfehlung: 2–3× die normale Laufzeit.
+        Hinweis: Liegt der Wert unter den eingestellten Pumpen-Laufzeiten, wird
+        intern automatisch die längere Laufzeit + 30 s verwendet, damit die
+        Not-Abschaltung das normale Gießen nicht unterbricht.
       default: 90
       selector:
         number:
@@ -183,7 +381,7 @@ blueprint:
           mode: slider
 
     auto_water_check_enabled:
-      name: "\U0001F501 Bewässerungs-Kontrolle aktiv?"
+      name: "🔁 Bewässerungs-Kontrolle aktiv?"
       description: >
         Wenn aktiviert, prüft die Automation nach dem Gießen ob der Sensor gestiegen ist.
         Wenn nicht (Tank leer, Pumpe defekt) → je nach Einstellung erneut gießen oder
@@ -194,7 +392,7 @@ blueprint:
         boolean: {}
 
     auto_water_check_delay:
-      name: "\u23F1\uFE0F Wartezeit nach dem Gießen (Sekunden)"
+      name: "⏱️ Wartezeit nach dem Gießen (Sekunden)"
       description: >
         Wie lange nach dem Abschalten der Pumpe soll gewartet werden bevor der
         Sensor abgelesen wird? Gibt dem Wasser Zeit in die Erde einzusickern.
@@ -210,7 +408,7 @@ blueprint:
           mode: slider
 
     auto_water_on_failure:
-      name: "\U0001F501 Was tun wenn Gießen nicht funktioniert hat?"
+      name: "🔁 Was tun wenn Gießen nicht funktioniert hat?"
       description: >
         Wähle was passieren soll wenn der Sensor nach dem Gießen nicht gestiegen ist.
         „Erneut gießen": Pumpe läuft ein zweites Mal mit gleicher Laufzeit, dann nochmal warten.
@@ -220,25 +418,25 @@ blueprint:
       selector:
         select:
           options:
-          - label: "\U0001F501 Erneut gießen (dann Alarm wenn immer noch trocken)"
+          - label: "🔁 Erneut gießen (dann Alarm wenn immer noch trocken)"
             value: retry
-          - label: "\U0001F6A8 Sofort Alarm senden"
+          - label: "🚨 Sofort Alarm senden"
             value: alarm
           multiple: false
           sort: false
           custom_value: false
 
     auto_water_failure_title:
-      name: "\U0001F6A8 Alarm-Titel bei Gieß-Fehler"
+      name: "🚨 Alarm-Titel bei Gieß-Fehler"
       description: Dieser Titel erscheint in der Benachrichtigung wenn das Gießen nicht funktioniert hat.
-      default: "\U0001F6A8 Gießen fehlgeschlagen!"
+      default: "🚨 Gießen fehlgeschlagen!"
       selector:
         text:
           multiline: false
           multiple: false
 
     auto_water_failure_message:
-      name: "\U0001F6A8 Alarm-Text bei Gieß-Fehler"
+      name: "🚨 Alarm-Text bei Gieß-Fehler"
       description: >
         Diese Nachricht wird gesendet wenn der Sensor nach dem Gießen nicht gestiegen ist.
         Mögliche Ursachen: Tank leer, Pumpe defekt, Leitung verstopft.
@@ -251,7 +449,7 @@ blueprint:
     # ─── ⏰ BEWÄSSERUNG – ZEITPLAN (täglich)
 
     scheduled_water_enabled:
-      name: "\u23F0 Planmäßiges Gießen aktivieren?"
+      name: "⏰ Planmäßiges Gießen aktivieren?"
       description: >
         Wenn aktiviert, läuft die Pumpe täglich zur eingestellten Uhrzeit – unabhängig vom Sensor.
         Optional: Sensor-Check stellt sicher dass nur gegossen wird wenn die Erde wirklich trocken ist.
@@ -262,7 +460,7 @@ blueprint:
         boolean: {}
 
     scheduled_water_time:
-      name: "\u23F0 Uhrzeit für planmäßiges Gießen"
+      name: "⏰ Uhrzeit für planmäßiges Gießen"
       description: >-
         Jeden Tag um diese Uhrzeit wird geprüft ob gegossen werden soll.
         Wenn Sensor-Check aktiv: Pumpe läuft nur wenn Feuchte unter dem Schwellenwert liegt.
@@ -272,7 +470,7 @@ blueprint:
         time: {}
 
     scheduled_water_duration:
-      name: "\u23F1\uFE0F Pump-Laufzeit beim Zeitplan (Sekunden)"
+      name: "⏱️ Pump-Laufzeit beim Zeitplan (Sekunden)"
       description: >
         Wie lange soll die Pumpe beim planmäßigen Gießen laufen?
         Kann sich vom automatischen Gießen unterscheiden –
@@ -287,17 +485,18 @@ blueprint:
           mode: slider
 
     scheduled_water_use_sensor:
-      name: "\U0001F4A7 Sensor-Check vor planmäßigem Gießen?"
+      name: "💧 Sensor-Check vor planmäßigem Gießen?"
       description: >
         Wenn aktiviert, wird vor dem Gießen der Sensor geprüft.
         Nur wenn die Feuchte unter dem eingestellten Schwellenwert liegt, läuft die Pumpe.
-        Deaktiviert: Pumpe läuft immer zur eingestellten Zeit, egal wie feucht die Erde ist.
+        Die Pumpe stoppt außerdem vorzeitig, sobald dieser Schwellenwert erreicht ist.
+        Deaktiviert: Pumpe läuft immer zur eingestellten Zeit die volle Laufzeit.
       default: true
       selector:
         boolean: {}
 
     scheduled_water_threshold:
-      name: "\U0001F4A7 Schwellenwert für planmäßiges Gießen (%)"
+      name: "💧 Schwellenwert für planmäßiges Gießen (%)"
       description: >
         Nur wenn die Bodenfeuchte unter diesem Wert liegt, wird planmäßig gegossen.
         Kann höher sein als der Alarm-Grenzwert für eine präventive Bewässerung:
@@ -311,14 +510,14 @@ blueprint:
           step: 1.0
           unit_of_measurement: '%'
           mode: slider
-
     # ─── 🔔 ALARM-VERHALTEN
 
     cooldown_minutes:
-      name: "\U0001F6D1 Sperrzeit nach Alarm (Minuten)"
+      name: "🛑 Sperrzeit nach Alarm (Minuten)"
       description: >
-        Nach einem ausgelösten Alarm wird für diese Dauer kein neuer Alarm gestartet.
+        Nach einem ausgelösten Alarm wird für diese Dauer keine neue Benachrichtigung gesendet.
         Schutz gegen Mehrfachauslösung, z. B. wenn der Sensor kurz über den Grenzwert steigt und wieder fällt.
+        Das automatische Gießen ist davon nicht betroffen.
         Auf 0 setzen, um die Sperrzeit zu deaktivieren.
       default: 30
       selector:
@@ -329,8 +528,24 @@ blueprint:
           unit_of_measurement: min
           mode: slider
 
+    cooldown_helper:
+      name: "🛑 Sperrzeit-Speicher (optional)"
+      description: >
+        Optional, aber empfohlen: ein input_datetime-Helfer **mit Datum UND Uhrzeit**.
+        Darin wird der Zeitpunkt des letzten Trocken-Alarms gespeichert, wodurch die
+        Sperrzeit exakt wirkt.
+        Leer lassen → Rückfall auf die letzte Ausführung der Automation. Das ist
+        ungenauer, weil dort auch planmäßiges Gießen, Entwarnungen und Button-Klicks
+        mitzählen.
+      default: null
+      selector:
+        entity:
+          domain:
+          - input_datetime
+          multiple: false
+
     repeat_mode:
-      name: "\U0001F504 Alarm-Wiederholung"
+      name: "🔄 Alarm-Wiederholung"
       description: Gilt nur für Alexa-Durchsagen. Mobile App und HA-Benachrichtigung werden immer einmalig gesendet. Alexa kann zusätzlich wiederholt werden, bis die Pflanze gegossen wurde.
       default: repeat
       selector:
@@ -345,7 +560,7 @@ blueprint:
           custom_value: false
 
     repeat_interval:
-      name: "\u23F0 Wiederholungsabstand (Minuten)"
+      name: "⏰ Wiederholungsabstand (Minuten)"
       description: Alle wie viele Minuten soll der Alarm wiederholt werden? Gilt nur wenn „Regelmäßig wiederholen" gewählt ist.
       default: 30
       selector:
@@ -357,11 +572,13 @@ blueprint:
           mode: slider
 
     snooze_duration:
-      name: "\U0001F634 Snooze-Dauer (Minuten)"
+      name: "😴 Snooze-Dauer (Minuten)"
       description: >
         Wie lange soll die Erinnerung verzögert werden wenn der Nutzer „Später erinnern"
         drückt? Nach Ablauf der Zeit wird erneut eine Push-Benachrichtigung gesendet –
         sofern die Pflanze noch trocken ist.
+        Die Alexa-Wiederholschleife pausiert ebenfalls für diese Dauer, wenn einer der
+        beiden Buttons gedrückt wurde.
       default: 120
       selector:
         number:
@@ -372,14 +589,14 @@ blueprint:
           mode: slider
 
     weekday_filter_enabled:
-      name: "\U0001F4C5 Wochentag-Filter aktivieren?"
-      description: Wenn aktiviert, werden Alarm-Benachrichtigungen nur an den gewählten Wochentagen gesendet. Das automatische Gießen läuft an allen Tagen.
+      name: "📅 Wochentag-Filter aktivieren?"
+      description: Wenn aktiviert, werden Alarm-Benachrichtigungen nur an den gewählten Wochentagen gesendet. Das automatische und planmäßige Gießen läuft an allen Tagen.
       default: false
       selector:
         boolean: {}
 
     weekday_filter:
-      name: "\U0001F4C5 Alarme nur an diesen Wochentagen"
+      name: "📅 Alarme nur an diesen Wochentagen"
       description: >
         Wähle die Tage, an denen Alarme gesendet werden dürfen.
         Nur relevant wenn „Wochentag-Filter aktivieren" eingeschaltet ist.
@@ -415,16 +632,16 @@ blueprint:
     # ─── 💬 NACHRICHTEN-TEXTE
 
     title_dry:
-      name: "\U0001F4EC Benachrichtigungstitel – Trocken-Alarm"
+      name: "📬 Benachrichtigungstitel – Trocken-Alarm"
       description: Dieser Titel erscheint in der Mobile-App-Benachrichtigung und im HA-Benachrichtigungsbereich.
-      default: "\U0001F331 Bodenfeuchte Warnung"
+      default: "🌱 Bodenfeuchte Warnung"
       selector:
         text:
           multiline: false
           multiple: false
 
     message_prefix_dry:
-      name: "\U0001F4DD Nachrichtentext – Trocken-Alarm"
+      name: "📝 Nachrichtentext – Trocken-Alarm"
       description: >
         Dieser Text erscheint im Nachrichteninhalt (Mobile App & HA-Benachrichtigung).
         Pflanzenname, aktueller Sensorwert und Grenzwert werden automatisch angehängt.
@@ -435,7 +652,7 @@ blueprint:
           multiple: false
 
     ok_info_enabled:
-      name: "\u2705 Entwarnung senden (Master-Schalter)"
+      name: "✅ Entwarnung senden (Master-Schalter)"
       description: >-
         Wenn aktiviert, wird nach dem Gießen automatisch eine Entwarnung gesendet, sobald die Feuchte
         stabil über dem OK-Wert liegt (Grenzwert + Hysterese).
@@ -445,16 +662,16 @@ blueprint:
         boolean: {}
 
     title_ok:
-      name: "\U0001F4EC Benachrichtigungstitel – Entwarnung"
+      name: "📬 Benachrichtigungstitel – Entwarnung"
       description: Dieser Titel erscheint in der Entwarnung (Mobile App & HA-Benachrichtigung).
-      default: "\U0001F33F Bodenfeuchte wieder OK"
+      default: "🌿 Bodenfeuchte wieder OK"
       selector:
         text:
           multiline: false
           multiple: false
 
     message_prefix_ok:
-      name: "\U0001F4DD Nachrichtentext – Entwarnung"
+      name: "📝 Nachrichtentext – Entwarnung"
       description: Dieser Text erscheint im Inhalt der Entwarnung. Pflanzenname, Sensorwert und OK-Grenzwert werden automatisch angehängt.
       default: "ist wieder gut versorgt."
       selector:
@@ -465,21 +682,21 @@ blueprint:
     # ─── 🔊 ALEXA
 
     alexa_enabled_dry:
-      name: "\U0001F50A Alexa – Trocken-Alarm aktiv"
+      name: "🔊 Alexa – Trocken-Alarm aktiv"
       description: Soll Alexa einen Alarm ansagen, wenn die Pflanze zu trocken ist?
       default: true
       selector:
         boolean: {}
 
     alexa_enabled_ok:
-      name: "\U0001F50A Alexa – Entwarnung aktiv"
+      name: "🔊 Alexa – Entwarnung aktiv"
       description: Soll Alexa eine Entwarnung ansagen, wenn die Feuchte wieder OK ist?
       default: true
       selector:
         boolean: {}
 
     alexa_targets:
-      name: "\U0001F50A Alexa-Geräte (Lautsprecher)"
+      name: "🔊 Alexa-Geräte (Lautsprecher)"
       description: Wähle einen oder mehrere Echo-Lautsprecher für die Ansagen aus. Leer lassen wenn kein Alexa vorhanden.
       default: []
       selector:
@@ -490,7 +707,7 @@ blueprint:
           reorder: false
 
     presence_entity:
-      name: "\U0001F4CD Personen / Geräte für Anwesenheitserkennung"
+      name: "📍 Personen / Geräte für Anwesenheitserkennung"
       description: >
         Alexa spricht nur, wenn mindestens eine dieser Personen (oder Geräte) in
         einer der gewählten Zonen ist. Mehrfachauswahl möglich.
@@ -505,7 +722,7 @@ blueprint:
           reorder: false
 
     presence_zone:
-      name: "\U0001F3E0 Zonen für Anwesenheitserkennung"
+      name: "🏠 Zonen für Anwesenheitserkennung"
       description: >
         Alexa spricht, wenn mindestens eine der gewählten Personen in mindestens
         einer dieser Zonen ist. Mehrfachauswahl möglich.
@@ -519,7 +736,7 @@ blueprint:
           reorder: false
 
     alexa_intro:
-      name: "\U0001F50A Alexa-Einleitung (vor dem Ansagetext)"
+      name: "🔊 Alexa-Einleitung (vor dem Ansagetext)"
       description: >
         Optionaler Einleitungstext der vor dem eigentlichen Ansagetext gesprochen wird.
         Beispiele: „Hallo!", „Achtung!", „Hinweis:" – oder leer lassen für keine Einleitung.
@@ -530,7 +747,7 @@ blueprint:
           multiple: false
 
     alexa_message_dry:
-      name: "\U0001F50A Alexa-Ansagetext – Trocken-Alarm"
+      name: "🔊 Alexa-Ansagetext – Trocken-Alarm"
       description: >-
         Dieser Text wird von Alexa nach der Einleitung gesprochen.
         Beispiel: „Hinweis: Monstera braucht Wasser. Aktuell 24 Prozent."
@@ -542,7 +759,7 @@ blueprint:
           multiple: false
 
     alexa_message_ok:
-      name: "\U0001F50A Alexa-Ansagetext – Entwarnung"
+      name: "🔊 Alexa-Ansagetext – Entwarnung"
       description: Dieser Text wird von Alexa nach der Einleitung vorgelesen, wenn die Feuchte wieder im grünen Bereich ist.
       default: "Die Bodenfeuchte ist wieder okay."
       selector:
@@ -551,14 +768,14 @@ blueprint:
           multiple: false
 
     alexa_volume_temp_enabled:
-      name: "\U0001F50A Alexa-Lautstärke vor Ansage anpassen"
+      name: "🔊 Alexa-Lautstärke vor Ansage anpassen"
       description: Wenn aktiviert, wird die Lautstärke vor der Ansage auf den eingestellten Wert gesetzt und danach automatisch wiederhergestellt.
       default: false
       selector:
         boolean: {}
 
     alexa_volume_level:
-      name: "\U0001F50A Lautstärke für Ansagen (0.0 – 1.0)"
+      name: "🔊 Lautstärke für Ansagen (0.0 – 1.0)"
       description: "Gewünschte Lautstärke während der Ansage. 0.0 = stumm, 0.5 = 50 %, 1.0 = maximale Lautstärke."
       default: 0.50
       selector:
@@ -569,7 +786,7 @@ blueprint:
           mode: slider
 
     alexa_volume_restore_delay:
-      name: "\u23F1\uFE0F Wartezeit vor Lautstärke-Wiederherstellung (Sekunden)"
+      name: "⏱️ Wartezeit vor Lautstärke-Wiederherstellung (Sekunden)"
       description: Kurze Pause nach der Ansage, bevor die ursprüngliche Lautstärke wiederhergestellt wird. Erhöhen, wenn die Ansage abgeschnitten wird.
       default: 10
       selector:
@@ -581,44 +798,47 @@ blueprint:
           unit_of_measurement: s
 
     alexa_quiet_enabled:
-      name: "\U0001F319 Alexa – Ruhezeit aktiv"
-      description: Wenn aktiviert, sendet Alexa in der eingestellten Ruhezeit keine Ansagen.
+      name: "🌙 Alexa – Ruhezeit aktiv"
+      description: >
+        Wenn aktiviert, sendet Alexa in der eingestellten Ruhezeit keine Ansagen.
+        Ein Alarm, der in die Ruhezeit fällt, wird zum Ruhezeit-Ende nachgeholt,
+        sofern die Pflanze dann noch trocken ist.
       default: true
       selector:
         boolean: {}
 
     alexa_quiet_start:
-      name: "\U0001F319 Alexa – Ruhezeit Beginn"
+      name: "🌙 Alexa – Ruhezeit Beginn"
       description: Ab dieser Uhrzeit schweigt Alexa (auch wenn ein Alarm ausgelöst wird).
-      default: '20:00:00'
+      default: "20:00:00"
       selector:
         time: {}
 
     alexa_quiet_end:
-      name: "\U0001F319 Alexa – Ruhezeit Ende"
+      name: "🌙 Alexa – Ruhezeit Ende"
       description: Ab dieser Uhrzeit ist Alexa wieder aktiv. Wird die Endzeit vor der Startzeit gewählt, gilt die Ruhezeit über Mitternacht hinweg.
-      default: 08:00:00
+      default: "08:00:00"
       selector:
         time: {}
 
     # ─── 📱 MOBILE APP
 
     mobile_enabled_dry:
-      name: "\U0001F4F1 App-Benachrichtigung – Trocken-Alarm aktiv"
+      name: "📱 App-Benachrichtigung – Trocken-Alarm aktiv"
       description: Sendet eine Push-Benachrichtigung auf dein Smartphone, wenn die Pflanze Wasser braucht.
       default: true
       selector:
         boolean: {}
 
     mobile_enabled_ok:
-      name: "\U0001F4F1 App-Benachrichtigung – Entwarnung aktiv"
+      name: "📱 App-Benachrichtigung – Entwarnung aktiv"
       description: Sendet eine Push-Benachrichtigung auf dein Smartphone, wenn die Feuchte wieder OK ist.
       default: true
       selector:
         boolean: {}
 
     mobile_device:
-      name: "\U0001F4F1 Smartphones für App-Benachrichtigungen"
+      name: "📱 Smartphones für App-Benachrichtigungen"
       description: Wähle ein oder mehrere Smartphones aus. Die Geräte müssen die Home Assistant App installiert haben. Leer lassen wenn keine App-Benachrichtigungen gewünscht.
       default: []
       selector:
@@ -627,67 +847,72 @@ blueprint:
           multiple: true
 
     mobile_quiet_enabled:
-      name: "\U0001F319 App-Benachrichtigung – Ruhezeit aktiv"
-      description: Wenn aktiviert, werden in der eingestellten Ruhezeit keine Push-Benachrichtigungen gesendet.
+      name: "🌙 App-Benachrichtigung – Ruhezeit aktiv"
+      description: >
+        Wenn aktiviert, werden in der eingestellten Ruhezeit keine Push-Benachrichtigungen gesendet.
+        Ein Alarm, der in die Ruhezeit fällt, wird zum Ruhezeit-Ende nachgeholt,
+        sofern die Pflanze dann noch trocken ist.
       default: true
       selector:
         boolean: {}
 
     mobile_quiet_start:
-      name: "\U0001F319 App-Benachrichtigung – Ruhezeit Beginn"
+      name: "🌙 App-Benachrichtigung – Ruhezeit Beginn"
       description: Ab dieser Uhrzeit werden keine Push-Benachrichtigungen gesendet. Wird die Endzeit vor der Startzeit gewählt, gilt die Ruhezeit über Mitternacht.
-      default: '22:00:00'
+      default: "22:00:00"
       selector:
         time: {}
 
     mobile_quiet_end:
-      name: "\U0001F319 App-Benachrichtigung – Ruhezeit Ende"
-      description: Wird die Endzeit vor der Startzeit gewählt, gilt die Ruhezeit über Mitternacht hinweg.
-      default: 07:00:00
+      name: "🌙 App-Benachrichtigung – Ruhezeit Ende"
+      description: Wird die Endzeit vor der Startzeit gewählt, gilt die Ruhezeit über Mitternacht hinweg. Zu dieser Uhrzeit werden zurückgehaltene Alarme nachgeholt.
+      default: "07:00:00"
       selector:
         time: {}
 
     # ─── 📋 HA-BENACHRICHTIGUNG
 
     persistent_enabled_dry:
-      name: "\U0001F4CB HA-Benachrichtigung – Trocken-Alarm aktiv"
+      name: "📋 HA-Benachrichtigung – Trocken-Alarm aktiv"
       description: Zeigt eine dauerhafte Benachrichtigung im Home Assistant-Benachrichtigungsbereich (Glocken-Symbol), wenn die Pflanze Wasser braucht.
       default: true
       selector:
         boolean: {}
 
     persistent_enabled_ok:
-      name: "\U0001F4CB HA-Benachrichtigung – Entwarnung aktiv"
+      name: "📋 HA-Benachrichtigung – Entwarnung aktiv"
       description: Ersetzt die Trocken-Benachrichtigung im HA-Benachrichtigungsbereich durch eine Entwarnung, wenn die Feuchte wieder OK ist.
       default: true
       selector:
         boolean: {}
 
     persistent_quiet_enabled:
-      name: "\U0001F319 HA-Benachrichtigung – Ruhezeit aktiv"
-      description: Wenn aktiviert, wird in der eingestellten Ruhezeit keine dauerhafte Benachrichtigung im HA-Panel erstellt.
+      name: "🌙 HA-Benachrichtigung – Ruhezeit aktiv"
+      description: >
+        Wenn aktiviert, wird in der eingestellten Ruhezeit keine dauerhafte Benachrichtigung im HA-Panel erstellt.
+        Ein Alarm, der in die Ruhezeit fällt, wird zum Ruhezeit-Ende nachgeholt.
       default: true
       selector:
         boolean: {}
 
     persistent_quiet_start:
-      name: "\U0001F319 HA-Benachrichtigung – Ruhezeit Beginn"
+      name: "🌙 HA-Benachrichtigung – Ruhezeit Beginn"
       description: Ab dieser Uhrzeit wird keine dauerhafte Benachrichtigung im HA-Panel erstellt. Wird die Endzeit vor der Startzeit gewählt, gilt die Ruhezeit über Mitternacht.
-      default: '22:00:00'
+      default: "22:00:00"
       selector:
         time: {}
 
     persistent_quiet_end:
-      name: "\U0001F319 HA-Benachrichtigung – Ruhezeit Ende"
-      description: Wird die Endzeit vor der Startzeit gewählt, gilt die Ruhezeit über Mitternacht hinweg.
-      default: 07:00:00
+      name: "🌙 HA-Benachrichtigung – Ruhezeit Ende"
+      description: Wird die Endzeit vor der Startzeit gewählt, gilt die Ruhezeit über Mitternacht hinweg. Zu dieser Uhrzeit werden zurückgehaltene Alarme nachgeholt.
+      default: "07:00:00"
       selector:
         time: {}
 
     # ─── 🚨 SENSORAUSFALL
 
     sensor_failure_enabled:
-      name: "\U0001F6A8 Sensorausfall-Erkennung aktiv?"
+      name: "🚨 Sensorausfall-Erkennung aktiv?"
       description: >
         Wenn aktiviert, wird eine Benachrichtigung gesendet, falls der Sensor für
         längere Zeit keinen gültigen Wert liefert (Status: unavailable oder unknown).
@@ -696,8 +921,11 @@ blueprint:
         boolean: {}
 
     sensor_failure_hours:
-      name: "\U0001F6A8 Toleranzzeit bei Sensorausfall (Stunden)"
-      description: Nach wie vielen Stunden ohne gültigen Sensorwert soll die Ausfall-Warnung gesendet werden?
+      name: "🚨 Toleranzzeit bei Sensorausfall (Stunden)"
+      description: >
+        Nach wie vielen Stunden ohne gültigen Sensorwert soll die Ausfall-Warnung gesendet werden?
+        Hinweis: Nach dem Ändern dieses Werts die Automation einmal neu laden, damit der
+        Trigger die neue Zeit übernimmt.
       default: 2
       selector:
         number:
@@ -708,7 +936,7 @@ blueprint:
           mode: slider
 
     sensor_failure_message:
-      name: "\U0001F6A8 Nachricht bei Sensorausfall"
+      name: "🚨 Nachricht bei Sensorausfall"
       description: Dieser Text wird gesendet, wenn der Sensor ausgefallen ist. Der Pflanzenname wird automatisch vorangestellt.
       default: "Sensor antwortet nicht – bitte prüfen!"
       selector:
@@ -719,20 +947,21 @@ blueprint:
     # ─── 🏖️ URLAUBS-/PAUSE-MODUS
 
     pause_mode_enabled:
-      name: "\U0001F3D6\uFE0F Urlaubs-/Pause-Modus aktivieren?"
+      name: "🏖️ Urlaubs-/Pause-Modus aktivieren?"
       description: >
-        Wenn aktiviert, werden alle Benachrichtigungen (Alexa, Mobile App, HA) unterdrückt.
-        Das automatische Gießen läuft aber weiter – die Pflanze wird auch im Urlaub versorgt.
+        Wenn aktiviert, werden alle Benachrichtigungen (Alexa, Mobile App, HA) unterdrückt –
+        Trocken-Alarm und Entwarnung.
+        Das automatische und planmäßige Gießen läuft aber weiter – die Pflanze wird auch im Urlaub versorgt.
         Erstelle vorher einen input_boolean in deinen Helfern (z. B. input_boolean.urlaubsmodus).
       default: false
       selector:
         boolean: {}
 
     pause_mode_entity:
-      name: "\U0001F3D6\uFE0F Pause-Schalter (input_boolean)"
+      name: "🏖️ Pause-Schalter (input_boolean)"
       description: >
         Wähle den input_boolean aus, der als Pause-Schalter dienen soll.
-        Wenn dieser Schalter „Ein" ist: Alle Benachrichtigungen werden unterdrückt, das automatische Gießen läuft aber weiter.
+        Wenn dieser Schalter „Ein" ist: Alle Benachrichtigungen werden unterdrückt, das Gießen läuft aber weiter.
         Leer lassen wenn kein Pause-Modus verwendet wird.
       default: null
       selector:
@@ -741,69 +970,119 @@ blueprint:
           - input_boolean
           multiple: false
 
+  source_url: https://github.com/x1marc/ha-blueprints/blob/main/Bodenfeuchte.yaml
 
-  source_url: https://github.com/x1marc/Bodenfeuchte-Alarm-System/blob/main/Bodenfeuchte.yaml
-
-mode: restart
+# mode: parallel ist Absicht.
+# Bei mode: restart bricht JEDER der Trigger einen bereits laufenden Ablauf ab –
+# z. B. das planmäßige Gießen um 07:00 die Alexa-Wiederholschleife, oder ein
+# Sensorausfall den Pumpen-Ablauf zwischen Ein- und Ausschalten (Pumpe bleibt an).
+# Die einzelnen Zweige sind gegeneinander abgesichert:
+#   - der Pumpen-Zweig startet nur, wenn die Pumpe gerade aus ist
+#   - die Not-Abschaltung läuft als eigener Trigger und greift immer
+#   - Doppel-Alarme verhindert die Sperrzeit
+mode: parallel
+max: 10
 max_exceeded: silent
 
+# ─────────────────────────────────────────────────────────────────────────────
+# WICHTIG: Alles in diesem Block wird von HA GENAU EINMAL beim Auslösen
+# berechnet und ändert sich während des Ablaufs nicht mehr.
+# Deshalb stehen hier nur statische Werte. Alles, was von Uhrzeit oder
+# Entity-Zuständen abhängt (Ruhezeit, Pause-Modus, Anwesenheit, Messwert),
+# wird im Ablauf per "- variables:" frisch berechnet.
+# ─────────────────────────────────────────────────────────────────────────────
 variables:
   sensor: !input moisture_sensor
   plant_name: !input plant_name
   thr: !input threshold_low
   hyst: !input hysteresis
-  thr_ok: '{{ ((thr | float(0)) + (hyst | float(0))) | round(1) }}'
+  thr_ok: "{{ ((thr | float(0)) + (hyst | float(0))) | round(1) }}"
+
   repeat_mode: !input repeat_mode
   repeat_interval: !input repeat_interval
   snooze_duration: !input snooze_duration
   cooldown_minutes: !input cooldown_minutes
+  cooldown_helper: !input cooldown_helper
+
   pause_mode_enabled: !input pause_mode_enabled
   pause_mode_entity: !input pause_mode_entity
+
   auto_water_enabled: !input auto_water_enabled
   auto_water_switch: !input auto_water_switch
   auto_water_duration: !input auto_water_duration
-  auto_water_safety_timeout: !input auto_water_safety_timeout
   auto_water_check_enabled: !input auto_water_check_enabled
   auto_water_check_delay: !input auto_water_check_delay
   auto_water_on_failure: !input auto_water_on_failure
   auto_water_failure_title: !input auto_water_failure_title
   auto_water_failure_message: !input auto_water_failure_message
+
   scheduled_water_enabled: !input scheduled_water_enabled
-  scheduled_water_time: !input scheduled_water_time
   scheduled_water_duration: !input scheduled_water_duration
   scheduled_water_use_sensor: !input scheduled_water_use_sensor
   scheduled_water_threshold: !input scheduled_water_threshold
+
   weekday_filter_enabled: !input weekday_filter_enabled
   weekday_filter: !input weekday_filter
+
   sensor_failure_enabled: !input sensor_failure_enabled
-  sensor_failure_hours: !input sensor_failure_hours
   sensor_failure_message: !input sensor_failure_message
+
   title_dry: !input title_dry
   message_prefix_dry: !input message_prefix_dry
-  alexa_intro: !input alexa_intro
-  alexa_message_dry: !input alexa_message_dry
   ok_info_enabled: !input ok_info_enabled
   title_ok: !input title_ok
   message_prefix_ok: !input message_prefix_ok
+
+  alexa_intro: !input alexa_intro
+  alexa_message_dry: !input alexa_message_dry
   alexa_message_ok: !input alexa_message_ok
   alexa_enabled_dry: !input alexa_enabled_dry
   alexa_enabled_ok: !input alexa_enabled_ok
-  persistent_enabled_dry: !input persistent_enabled_dry
-  persistent_enabled_ok: !input persistent_enabled_ok
-  mobile_enabled_dry: !input mobile_enabled_dry
-  mobile_enabled_ok: !input mobile_enabled_ok
   alexa_targets: !input alexa_targets
-  presence_entity: !input presence_entity
-  presence_zone: !input presence_zone
   alexa_volume_temp_enabled: !input alexa_volume_temp_enabled
   alexa_volume_level: !input alexa_volume_level
   alexa_volume_restore_delay: !input alexa_volume_restore_delay
+  alexa_quiet_enabled: !input alexa_quiet_enabled
+  alexa_quiet_start: !input alexa_quiet_start
+  alexa_quiet_end: !input alexa_quiet_end
+
+  persistent_enabled_dry: !input persistent_enabled_dry
+  persistent_enabled_ok: !input persistent_enabled_ok
+  persistent_quiet_enabled: !input persistent_quiet_enabled
+  persistent_quiet_start: !input persistent_quiet_start
+  persistent_quiet_end: !input persistent_quiet_end
+
+  mobile_enabled_dry: !input mobile_enabled_dry
+  mobile_enabled_ok: !input mobile_enabled_ok
   mobile_device: !input mobile_device
+  mobile_quiet_enabled: !input mobile_quiet_enabled
+  mobile_quiet_start: !input mobile_quiet_start
+  mobile_quiet_end: !input mobile_quiet_end
+
+  presence_entity: !input presence_entity
+  presence_zone: !input presence_zone
+
+  sensor_name: "{{ state_attr(sensor, 'friendly_name') or sensor }}"
+  notification_id: "bodenfeuchte_{{ sensor | slugify }}"
+
+  # Pumpe gültig ausgewählt?
+  pump_valid: >-
+    {{ auto_water_switch is not none
+       and auto_water_switch is not sameas false
+       and (auto_water_switch | string) not in ['', 'None'] }}
+
+  # Sperrzeit-Speicher gültig ausgewählt?
+  cooldown_helper_valid: >-
+    {{ cooldown_helper is not none
+       and cooldown_helper is not sameas false
+       and (cooldown_helper | string) not in ['', 'None'] }}
+
+  # Mobile-App: Geräte -> notify-Dienste
   mobile_notify_services: >-
     {% if mobile_device is none or mobile_device is sameas false or (mobile_device | string) == "None" %}
       {{ [] }}
     {% else %}
-      {% set devices = mobile_device if (mobile_device is iterable and mobile_device is not string and mobile_device is not sameas false) else [mobile_device] %}
+      {% set devices = mobile_device if (mobile_device is iterable and mobile_device is not string) else [mobile_device] %}
       {% set ns = namespace(services=[]) %}
       {% for dev in devices %}
         {% set dev_name = device_attr(dev, 'name') %}
@@ -813,17 +1092,8 @@ variables:
       {% endfor %}
       {{ ns.services }}
     {% endif %}
-  alexa_quiet_enabled: !input alexa_quiet_enabled
-  alexa_quiet_start: !input alexa_quiet_start
-  alexa_quiet_end: !input alexa_quiet_end
-  mobile_quiet_enabled: !input mobile_quiet_enabled
-  mobile_quiet_start: !input mobile_quiet_start
-  mobile_quiet_end: !input mobile_quiet_end
-  persistent_quiet_enabled: !input persistent_quiet_enabled
-  persistent_quiet_start: !input persistent_quiet_start
-  persistent_quiet_end: !input persistent_quiet_end
-  sensor_name: '{{ state_attr(sensor, ''friendly_name'') or sensor }}'
-  # Alexa-Targets: none/false abfangen → leere Liste
+
+  # Alexa-Targets: none/false abfangen -> leere Liste
   alexa_targets_safe: >-
     {% if alexa_targets is none or alexa_targets is sameas false or (alexa_targets | string) == "None" %}
       {{ [] }}
@@ -832,140 +1102,39 @@ variables:
     {% else %}
       {{ alexa_targets }}
     {% endif %}
-  # Nachrichten – Pflanzenname statt Sensor-Entity-Name
-  msg_dry_common: >-
-    {{ plant_name }} {{ message_prefix_dry }}
-    (Feuchte: {{ states(sensor) | float(0) }}%, Grenzwert: {{ thr }}%, OK ab: {{ thr_ok }}%)
-  msg_ok_common: >-
-    {{ plant_name }} {{ message_prefix_ok }}
-    (Feuchte: {{ states(sensor) | float(0) }}%, OK ab: {{ thr_ok }}%)
-  # Alexa: Einleitung + Pflanzenname + konfigurierter Text
-  msg_dry_alexa: >-
-    {{ alexa_intro + ' ' if alexa_intro else '' }}{{ plant_name }} {{ alexa_message_dry }}
-    Aktuell {{ states(sensor) | float(0) }} Prozent.
-  msg_ok_alexa: >-
-    {{ alexa_intro + ' ' if alexa_intro else '' }}{{ plant_name }}: {{ alexa_message_ok }}
-    Aktuell {{ states(sensor) | float(0) }} Prozent.
-  msg_sensor_failure: >-
-    {{ plant_name }}: {{ sensor_failure_message }}
-    (Sensor: {{ sensor_name }})
-  notification_id: 'bodenfeuchte_{{ sensor | slugify }}'
-  person_in_zone: >-
-    {% if not presence_entity or presence_entity is none or (presence_entity | string) == "None" or (presence_entity is iterable and presence_entity | list | length == 0) %}
-      true
-    {% else %}
-      {% set persons = presence_entity if (presence_entity is iterable and presence_entity is not string) else [presence_entity] %}
-      {% set zones = presence_zone if (presence_zone is iterable and presence_zone is not string and presence_zone | length > 0) else ['home'] %}
-      {% set ns = namespace(found=false) %}
-      {% for p in persons %}
-        {% for z in zones %}
-          {% if states(p) == z.split('.')[-1] %}
-            {% set ns.found = true %}
-          {% endif %}
-        {% endfor %}
-      {% endfor %}
-      {{ ns.found }}
-    {% endif %}
-  # Pause-Modus: true wenn pausiert werden soll
-  is_paused: >-
-    {% if pause_mode_enabled | bool
-         and pause_mode_entity is not none
-         and pause_mode_entity is not sameas false
-         and pause_mode_entity | string | length > 0 %}
-      {{ states(pause_mode_entity) == 'on' }}
-    {% else %}
-      false
-    {% endif %}
-  # Wochentag-Filter: true wenn heute erlaubt ist
-  weekday_allowed: >-
-    {% if not weekday_filter_enabled %}
-      true
-    {% else %}
-      {% set days = ['mon','tue','wed','thu','fri','sat','sun'] %}
-      {% set today = days[now().weekday()] %}
-      {{ today in weekday_filter }}
-    {% endif %}
-  cooldown_ok: >-
-    {% if cooldown_minutes | int(0) == 0 %}
-      true
-    {% else %}
-      {% set lt = this.attributes.last_triggered %}
-      {% if lt is none %}
-        true
-      {% else %}
-        {{ (now() - lt).total_seconds() > (cooldown_minutes | int(0) * 60) }}
-      {% endif %}
-    {% endif %}
-  in_quiet_alexa: >-
-    {% if not alexa_quiet_enabled %}
-      false
-    {% else %}
-      {% set s = today_at(alexa_quiet_start) %}
-      {% set e = today_at(alexa_quiet_end) %}
-      {% if e <= s %}
-        {{ now() >= s or now() < e }}
-      {% else %}
-        {{ now() >= s and now() < e }}
-      {% endif %}
-    {% endif %}
-  in_quiet_mobile: >-
-    {% if not mobile_quiet_enabled %}
-      false
-    {% else %}
-      {% set s = today_at(mobile_quiet_start) %}
-      {% set e = today_at(mobile_quiet_end) %}
-      {% if e <= s %}
-        {{ now() >= s or now() < e }}
-      {% else %}
-        {{ now() >= s and now() < e }}
-      {% endif %}
-    {% endif %}
-  in_quiet_persistent: >-
-    {% if not persistent_quiet_enabled %}
-      false
-    {% else %}
-      {% set s = today_at(persistent_quiet_start) %}
-      {% set e = today_at(persistent_quiet_end) %}
-      {% if e <= s %}
-        {{ now() >= s or now() < e }}
-      {% else %}
-        {{ now() >= s and now() < e }}
-      {% endif %}
-    {% endif %}
-  any_dry_channel_enabled: >-
-    {{
-      (alexa_enabled_dry | bool)
-      or (persistent_enabled_dry | bool)
-      or (mobile_enabled_dry | bool)
-    }}
-  can_send_alexa_now: >-
-    {{
-      not (is_paused | bool)
-      and (weekday_allowed | bool)
-      and (alexa_enabled_dry | bool)
-      and (person_in_zone | bool)
-      and not (in_quiet_alexa | bool)
-    }}
 
+# Trigger-Templates sehen AUSSCHLIESSLICH diese Variablen – nicht den variables-Block.
 trigger_variables:
   thr: !input threshold_low
   hyst: !input hysteresis
   thr_ok: "{{ ((thr | float(0)) + (hyst | float(0))) | round(1) }}"
-  _sensor_slug: !input moisture_sensor
-  _notif_id: "bodenfeuchte_{{ _sensor_slug | slugify }}"
-  _snooze_action: "snooze_bodenfeuchte_{{ _sensor_slug | slugify }}"
+  _sensor: !input moisture_sensor
+  _notif_id: "bodenfeuchte_{{ _sensor | slugify }}"
+  _snooze_action: "snooze_bodenfeuchte_{{ _sensor | slugify }}"
+  _sensor_failure_hours: !input sensor_failure_hours
+  _aw_safety: !input auto_water_safety_timeout
+  _aw_duration: !input auto_water_duration
+  _sw_duration: !input scheduled_water_duration
+  # Not-Abschaltung darf das normale Gießen nie unterbrechen:
+  # mindestens die längste Pumpen-Laufzeit + 30 s.
+  _pump_safety: >-
+    {{ [ (_aw_safety | int(90)),
+         (_aw_duration | int(30)) + 30,
+         (_sw_duration | int(20)) + 30 ] | max }}
 
 trigger:
+  # Feuchte unter Grenzwert
   - platform: numeric_state
     id: dry
     entity_id: !input moisture_sensor
     below: !input threshold_low
     for: !input below_for
 
-  - platform: numeric_state
+  # Feuchte wieder über Grenzwert + Hysterese.
+  # Template-Trigger, weil numeric_state bei above:/below: KEIN Template akzeptiert.
+  - platform: template
     id: ok
-    entity_id: !input moisture_sensor
-    above: "{{ thr_ok }}"
+    value_template: "{{ states(_sensor) | float(-1) >= (thr_ok | float(0)) }}"
     for: !input ok_for
 
   # Sensorausfall: unavailable oder unknown für X Stunden
@@ -976,630 +1145,786 @@ trigger:
       - unavailable
       - unknown
     for:
-      hours: "{{ sensor_failure_hours | int(2) }}"
+      hours: "{{ _sensor_failure_hours | int(2) }}"
 
-  # Aktions-Button „Als gegossen markieren“ in der Push-Benachrichtigung
+  # Aktions-Button „Als gegossen markieren"
   - platform: event
     id: action_watered
     event_type: mobile_app_notification_action
     event_data:
       action: "dismiss_{{ _notif_id }}"
 
-  # Aktions-Button „Später erinnern“ (Snooze)
+  # Aktions-Button „Später erinnern" (Snooze)
   - platform: event
     id: action_snooze
     event_type: mobile_app_notification_action
     event_data:
       action: "{{ _snooze_action }}"
 
-  # Planmäßiges Gießen – täglich zur eingestellten Zeit
+  # Planmäßiges Gießen
   - platform: time
     id: scheduled_water
     at: !input scheduled_water_time
+
+  # Nachholung zurückgehaltener Alarme am Ruhezeit-Ende (übersteht HA-Neustart)
+  - platform: time
+    id: quiet_end_mobile
+    at: !input mobile_quiet_end
+
+  - platform: time
+    id: quiet_end_persistent
+    at: !input persistent_quiet_end
+
+  - platform: time
+    id: quiet_end_alexa
+    at: !input alexa_quiet_end
+
+  # Not-Abschaltung: Pumpe zu lange am Stück an.
+  # Ist keine Pumpe gewählt, ist entity_id leer und der Trigger feuert nie.
+  - platform: state
+    id: pump_safety
+    entity_id: !input auto_water_switch
+    to: "on"
+    for:
+      seconds: "{{ _pump_safety | int(90) }}"
+
+  # Nach HA-Neustart prüfen, ob die Pflanze bereits trocken ist
+  # (numeric_state feuert nur beim Unterschreiten, nicht im Dauerzustand).
+  - platform: homeassistant
+    id: ha_start
+    event: start
 
 condition: []
 
 action:
   - choose:
 
+    # ─── PUMPEN-NOT-ABSCHALTUNG ─────────────────────────────────────────────────
+    # Zuerst geprüft. Greift unabhängig davon, was die Automation gerade macht –
+    # auch wenn ein Ablauf abgebrochen wurde oder die Pumpe von Hand lief.
+    - conditions:
+        - condition: trigger
+          id: pump_safety
+        - condition: template
+          value_template: "{{ pump_valid | bool }}"
+      sequence:
+        - service: homeassistant.turn_off
+          target:
+            entity_id: "{{ auto_water_switch }}"
+        - service: persistent_notification.create
+          data:
+            title: "🛑 Pumpe not-abgeschaltet"
+            message: >-
+              Die Bewässerung von {{ plant_name }} lief länger als das eingestellte
+              Sicherheits-Timeout und wurde zwangsweise abgeschaltet.
+              (Sensor: {{ sensor_name }} = {{ states(sensor) }} %)
+            notification_id: "{{ notification_id }}_safety"
+
     # ─── TROCKEN-ALARM ──────────────────────────────────────────────────────────
     - conditions:
         - condition: trigger
-          id: dry
-        - condition: template
-          value_template: '{{ cooldown_ok | bool }}'
-        - condition: template
-          value_template: '{{ weekday_allowed | bool }}'
+          id:
+            - dry
+            - ha_start
       sequence:
 
-        # ── Automatisches Gießen (vor Benachrichtigungen) ──────────────────────
+        # Nach HA-Neustart kurz warten, bis Integrationen geladen sind
+        - choose:
+          - conditions:
+              - condition: trigger
+                id: ha_start
+            sequence:
+              - delay:
+                  minutes: 2
+
+        - variables:
+            live_is_dry: "{{ (states(sensor) | float(999)) < (thr | float(0)) }}"
+            live_cooldown_ok: >-
+              {% if (cooldown_minutes | int(0)) == 0 %}
+                true
+              {% else %}
+                {% set ref = states(cooldown_helper) if (cooldown_helper_valid | bool)
+                             else (this.attributes.last_triggered if this else none) %}
+                {{ (now().timestamp() - (ref | as_timestamp(0))) > ((cooldown_minutes | int(0)) * 60) }}
+              {% endif %}
+
+        # Nichts zu tun, wenn die Pflanze gar nicht (mehr) trocken ist
+        - condition: template
+          value_template: "{{ live_is_dry | bool }}"
+
+        # ── Automatisches Gießen (läuft auch im Pause-Modus und an gesperrten Tagen)
         - choose:
           - conditions:
               - condition: template
                 value_template: >-
-                  {{
-                    auto_water_enabled | bool
-                    and auto_water_switch is not none
-                    and auto_water_switch is not sameas false
-                    and auto_water_switch | string | length > 0
-                  }}
+                  {{ auto_water_enabled | bool
+                     and pump_valid | bool
+                     and not is_state(auto_water_switch, 'on') }}
             sequence:
-              # ── Pump-Durchgang 1 ─────────────────────────────────────────────
-              - service: switch.turn_on
+              # ── Pump-Durchgang 1 ──
+              - service: homeassistant.turn_on
                 target:
-                  entity_id: '{{ auto_water_switch }}'
+                  entity_id: "{{ auto_water_switch }}"
               - wait_for_trigger:
                   - platform: template
                     value_template: "{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}"
                 timeout:
                   seconds: "{{ auto_water_duration | int(30) }}"
                 continue_on_timeout: true
-              - service: switch.turn_off
+              - service: homeassistant.turn_off
                 target:
-                  entity_id: '{{ auto_water_switch }}'
+                  entity_id: "{{ auto_water_switch }}"
 
-              # ── Bewässerungs-Kontrolle ────────────────────────────────────────
+              # ── Bewässerungs-Kontrolle ──
               - choose:
                 - conditions:
                     - condition: template
-                      value_template: '{{ auto_water_check_enabled | bool }}'
+                      value_template: "{{ auto_water_check_enabled | bool }}"
                   sequence:
-                    # Warten bis Wasser eingesickert ist
+                    # Wasser einsickern lassen
                     - delay:
-                        seconds: '{{ auto_water_check_delay | int(60) }}'
+                        seconds: "{{ auto_water_check_delay | int(60) }}"
 
-                    # Noch trocken? → Retry oder sofort Alarm
+                    # Noch trocken und „Erneut gießen" gewählt? → 2. Durchgang
                     - choose:
                       - conditions:
                           - condition: template
                             value_template: >-
-                              {{
-                                states(sensor) | float(999) < (thr | float(0))
-                                and auto_water_on_failure == 'retry'
-                              }}
+                              {{ (states(sensor) | float(999)) < (thr | float(0))
+                                 and auto_water_on_failure == 'retry'
+                                 and not is_state(auto_water_switch, 'on') }}
                         sequence:
-                          # ── Pump-Durchgang 2 (Wiederholung) ──────────────────
-                          - service: switch.turn_on
+                          - service: homeassistant.turn_on
                             target:
-                              entity_id: '{{ auto_water_switch }}'
+                              entity_id: "{{ auto_water_switch }}"
                           - wait_for_trigger:
                               - platform: template
                                 value_template: "{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}"
                             timeout:
                               seconds: "{{ auto_water_duration | int(30) }}"
                             continue_on_timeout: true
-                          - service: switch.turn_off
+                          - service: homeassistant.turn_off
                             target:
-                              entity_id: '{{ auto_water_switch }}'
-                          # Nochmals warten nach 2. Pumpe
+                              entity_id: "{{ auto_water_switch }}"
                           - delay:
-                              seconds: '{{ auto_water_check_delay | int(60) }}'
+                              seconds: "{{ auto_water_check_delay | int(60) }}"
 
-                    # Alarm wenn immer noch trocken (nach retry oder direkt)
+                    # Immer noch trocken → Fehler-Alarm
+                    # Hinweis: ignoriert bewusst Ruhezeit, Pause-Modus und Wochentag-Filter.
+                    # Eine defekte Pumpe oder ein leerer Tank soll immer gemeldet werden.
                     - choose:
                       - conditions:
                           - condition: template
-                            value_template: "{{ states(sensor) | float(999) < (thr | float(0)) }}"
+                            value_template: "{{ (states(sensor) | float(999)) < (thr | float(0)) }}"
                         sequence:
                           - service: persistent_notification.create
                             data:
-                              title: '{{ auto_water_failure_title }}'
+                              title: "{{ auto_water_failure_title }}"
                               message: >-
                                 {{ auto_water_failure_message }}
-                                (Sensor: {{ sensor_name }} = {{ states(sensor) | float(0) }}%,
-                                Grenzwert: {{ thr }}%)
-                              notification_id: '{{ notification_id }}_pump_failure'
-                          # Kritischer Alarm: ignoriert Ruhezeit bewusst (Pumpenfehler = immer melden)
+                                (Sensor: {{ sensor_name }} = {{ states(sensor) }} %,
+                                Grenzwert: {{ thr }} %)
+                              notification_id: "{{ notification_id }}_pump_failure"
                           - choose:
                             - conditions:
                                 - condition: template
-                                  value_template: '{{ mobile_enabled_dry and (mobile_notify_services | length > 0) }}'
+                                  value_template: >-
+                                    {{ mobile_enabled_dry | bool and (mobile_notify_services | count > 0) }}
                               sequence:
                                 - repeat:
-                                    for_each: '{{ mobile_notify_services }}'
+                                    for_each: "{{ mobile_notify_services }}"
                                     sequence:
-                                      - service: '{{ repeat.item }}'
+                                      - service: "{{ repeat.item }}"
+                                        continue_on_error: true
                                         data:
-                                          title: '{{ auto_water_failure_title }}'
+                                          title: "{{ auto_water_failure_title }}"
                                           message: >-
                                             {{ auto_water_failure_message }}
-                                            ({{ sensor_name }}: {{ states(sensor) | float(0) }}%)
+                                            ({{ sensor_name }}: {{ states(sensor) }} %)
                                           data:
-                                            tag: '{{ notification_id }}_pump_failure'
+                                            tag: "{{ notification_id }}_pump_failure"
                           - choose:
                             - conditions:
                                 - condition: template
-                                  value_template: '{{ alexa_enabled_dry and (person_in_zone | bool) and not (in_quiet_alexa | bool) }}'
+                                  value_template: >-
+                                    {{ alexa_enabled_dry | bool and (alexa_targets_safe | count > 0) }}
                               sequence:
                                 - repeat:
-                                    for_each: '{{ alexa_targets_safe }}'
+                                    for_each: "{{ alexa_targets_safe }}"
                                     sequence:
                                       - service: notify.alexa_media
+                                        continue_on_error: true
                                         data:
                                           message: >-
-                                            {{ alexa_intro + ' ' if alexa_intro else '' }}
+                                            {{ alexa_intro + ' ' if alexa_intro else '' }}{{ plant_name }}:
                                             {{ auto_water_failure_message }}
                                           target:
-                                            - '{{ repeat.item }}'
+                                            - "{{ repeat.item }}"
 
-        # Wenn Pumpe erfolgreich war (Sensor wieder OK) → keine Benachrichtigungen
-        # Auch wenn Gieß-Fehler-Alarm gesendet wurde → keine doppelten Normal-Alarme
+        # ── Ab hier Benachrichtigungen: alle Live-Werte frisch einlesen ──────────
+        - variables:
+            n_moisture: "{{ states(sensor) }}"
+            n_is_dry: "{{ (states(sensor) | float(999)) < (thr | float(0)) }}"
+            n_paused: >-
+              {% if pause_mode_enabled | bool
+                    and pause_mode_entity is not none
+                    and (pause_mode_entity | string) not in ['', 'None'] %}
+                {{ is_state(pause_mode_entity, 'on') }}
+              {% else %}
+                false
+              {% endif %}
+            n_weekday: >-
+              {% if not (weekday_filter_enabled | bool) %}
+                true
+              {% else %}
+                {{ ['mon','tue','wed','thu','fri','sat','sun'][now().weekday()] in weekday_filter }}
+              {% endif %}
+            n_quiet_mobile: >-
+              {% if not (mobile_quiet_enabled | bool) %}
+                false
+              {% else %}
+                {% set s = today_at(mobile_quiet_start) %}
+                {% set e = today_at(mobile_quiet_end) %}
+                {% if e <= s %}{{ now() >= s or now() < e }}{% else %}{{ now() >= s and now() < e }}{% endif %}
+              {% endif %}
+            n_quiet_persistent: >-
+              {% if not (persistent_quiet_enabled | bool) %}
+                false
+              {% else %}
+                {% set s = today_at(persistent_quiet_start) %}
+                {% set e = today_at(persistent_quiet_end) %}
+                {% if e <= s %}{{ now() >= s or now() < e }}{% else %}{{ now() >= s and now() < e }}{% endif %}
+              {% endif %}
+            n_msg_dry: >-
+              {{ plant_name }} {{ message_prefix_dry }}
+              (Feuchte: {{ n_moisture }} %, Grenzwert: {{ thr }} %, OK ab: {{ thr_ok }} %)
+
+        # Abbruch, wenn erledigt oder gesperrt:
+        #  - Pumpe hat die Pflanze versorgt (Sensor nicht mehr trocken)
+        #  - Bewässerungs-Kontrolle aktiv → hat bereits ihren eigenen Alarm gesendet
+        #  - Sperrzeit läuft noch / Wochentag nicht freigegeben
         - condition: template
           value_template: >-
-            {{
-              states(sensor) | float(999) < (thr | float(0))
-              and not (
-                auto_water_check_enabled | bool
-                and auto_water_enabled | bool
-                and auto_water_switch is not none
-                and auto_water_switch is not sameas false
-                and auto_water_switch | string | length > 0
-              )
-            }}
+            {{ (n_is_dry | bool)
+               and not (auto_water_check_enabled | bool and auto_water_enabled | bool and pump_valid | bool)
+               and (live_cooldown_ok | bool)
+               and (n_weekday | bool) }}
 
-        # ── Mobile: EINMALIG – sofort oder nach Ruhezeit ──────────────────────
+        # Zeitpunkt für die Sperrzeit festhalten
         - choose:
           - conditions:
               - condition: template
-                value_template: '{{ mobile_enabled_dry and (mobile_notify_services | length > 0) and not (in_quiet_mobile | bool) and not (is_paused | bool) }}'
+                value_template: "{{ cooldown_helper_valid | bool }}"
+            sequence:
+              - service: input_datetime.set_datetime
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cooldown_helper }}"
+                data:
+                  datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+        # ── Mobile App (einmalig; Ruhezeit → Nachholung per quiet_end_mobile) ──
+        - choose:
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {{ mobile_enabled_dry | bool
+                     and (mobile_notify_services | count > 0)
+                     and not (n_quiet_mobile | bool)
+                     and not (n_paused | bool) }}
             sequence:
               - repeat:
-                  for_each: '{{ mobile_notify_services }}'
+                  for_each: "{{ mobile_notify_services }}"
                   sequence:
-                    - service: '{{ repeat.item }}'
+                    - service: "{{ repeat.item }}"
+                      continue_on_error: true
                       data:
-                        title: '{{ title_dry }}'
-                        message: '{{ msg_dry_common }}'
+                        title: "{{ title_dry }}"
+                        message: "{{ n_msg_dry }}"
                         data:
                           actions:
                             - action: "dismiss_{{ notification_id }}"
                               title: "💧 Als gegossen markieren"
                             - action: "snooze_{{ notification_id }}"
                               title: "😴 Später erinnern"
-                          tag: '{{ notification_id }}'
-          - conditions:
-              - condition: template
-                value_template: '{{ mobile_enabled_dry and (mobile_notify_services | length > 0) and (in_quiet_mobile | bool) and not (is_paused | bool) }}'
-            sequence:
-              - wait_for_trigger:
-                  - platform: time
-                    at: "{{ mobile_quiet_end }}"
-                  - platform: template
-                    value_template: "{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}"
-                timeout:
-                  hours: 24
-                continue_on_timeout: true
-              - condition: template
-                value_template: "{{ not (in_quiet_mobile | bool) }}"
-              - condition: template
-                value_template: "{{ states(sensor) | float(999) < (thr | float(0)) }}"
-              - repeat:
-                  for_each: '{{ mobile_notify_services }}'
-                  sequence:
-                    - service: '{{ repeat.item }}'
-                      data:
-                        title: '{{ title_dry }}'
-                        message: '{{ msg_dry_common }}'
-                        data:
-                          actions:
-                            - action: "dismiss_{{ notification_id }}"
-                              title: "💧 Als gegossen markieren"
-                            - action: "snooze_{{ notification_id }}"
-                              title: "😴 Später erinnern"
-                          tag: '{{ notification_id }}'
+                          tag: "{{ notification_id }}"
 
-        # ── Persistent: EINMALIG – sofort oder nach Ruhezeit ─────────────────
+        # ── HA-Benachrichtigung (Ruhezeit → Nachholung per quiet_end_persistent) ──
         - choose:
           - conditions:
               - condition: template
-                value_template: '{{ persistent_enabled_dry and not (in_quiet_persistent | bool) and not (is_paused | bool) }}'
+                value_template: >-
+                  {{ persistent_enabled_dry | bool
+                     and not (n_quiet_persistent | bool)
+                     and not (n_paused | bool) }}
             sequence:
               - service: persistent_notification.create
                 data:
-                  title: '{{ title_dry }}'
-                  message: '{{ msg_dry_common }}'
-                  notification_id: '{{ notification_id }}'
-          - conditions:
-              - condition: template
-                value_template: '{{ persistent_enabled_dry and (in_quiet_persistent | bool) and not (is_paused | bool) }}'
-            sequence:
-              - wait_for_trigger:
-                  - platform: time
-                    at: "{{ persistent_quiet_end }}"
-                  - platform: template
-                    value_template: "{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}"
-                timeout:
-                  hours: 24
-                continue_on_timeout: true
-              - condition: template
-                value_template: "{{ not (in_quiet_persistent | bool) }}"
-              - condition: template
-                value_template: "{{ states(sensor) | float(999) < (thr | float(0)) }}"
-              - service: persistent_notification.create
-                data:
-                  title: '{{ title_dry }}'
-                  message: '{{ msg_dry_common }}'
-                  notification_id: '{{ notification_id }}'
+                  title: "{{ title_dry }}"
+                  message: "{{ n_msg_dry }}"
+                  notification_id: "{{ notification_id }}"
 
-        # ── Alexa: einmalig ODER wiederholt ───────────────────────────────────
+        # ── Alexa: einmalig oder wiederholt ───────────────────────────────────
+        # Eine einzige Schleife für beide Modi. Alle Bedingungen werden pro
+        # Durchlauf NEU berechnet – dadurch wirken Ruhezeit-Ende, Pause-Modus
+        # und Anwesenheit auch mitten im Ablauf.
         - choose:
-
-          # EINMALIG
           - conditions:
               - condition: template
-                value_template: "{{ repeat_mode == 'once' }}"
-            sequence:
-              - choose:
-                - conditions:
-                    - condition: template
-                      value_template: '{{ alexa_enabled_dry and (person_in_zone | bool) and not (in_quiet_alexa | bool) and not (is_paused | bool) }}'
-                  sequence:
-                    - repeat:
-                        for_each: '{{ alexa_targets_safe }}'
-                        sequence:
-                          - variables:
-                              _player: '{{ repeat.item }}'
-                              _prev_vol: '{{ state_attr(_player, ''volume_level'') | float(0.3) }}'
-                          - choose:
-                            - conditions:
-                                - condition: template
-                                  value_template: '{{ alexa_volume_temp_enabled | bool }}'
-                              sequence:
-                                - service: media_player.volume_set
-                                  data:
-                                    entity_id: '{{ _player }}'
-                                    volume_level: '{{ alexa_volume_level | float(0.35) }}'
-                          - service: notify.alexa_media
-                            data:
-                              title: '{{ title_dry }}'
-                              message: '{{ msg_dry_alexa }}'
-                              target:
-                                - '{{ _player }}'
-                          - choose:
-                            - conditions:
-                                - condition: template
-                                  value_template: '{{ alexa_volume_temp_enabled | bool }}'
-                              sequence:
-                                - delay:
-                                    seconds: '{{ alexa_volume_restore_delay | int(10) }}'
-                                - service: media_player.volume_set
-                                  data:
-                                    entity_id: '{{ _player }}'
-                                    volume_level: '{{ _prev_vol }}'
-                - conditions:
-                    - condition: template
-                      value_template: '{{ alexa_enabled_dry and (person_in_zone | bool) and (in_quiet_alexa | bool) and not (is_paused | bool) }}'
-                  sequence:
-                    - wait_for_trigger:
-                        - platform: time
-                          at: "{{ alexa_quiet_end }}"
-                        - platform: template
-                          value_template: "{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}"
-                      timeout:
-                        hours: 24
-                      continue_on_timeout: true
-                    - condition: template
-                      value_template: "{{ not (in_quiet_alexa | bool) }}"
-                    - condition: template
-                      value_template: "{{ states(sensor) | float(999) < (thr | float(0)) }}"
-                    - repeat:
-                        for_each: '{{ alexa_targets_safe }}'
-                        sequence:
-                          - variables:
-                              _player: '{{ repeat.item }}'
-                              _prev_vol: '{{ state_attr(_player, ''volume_level'') | float(0.3) }}'
-                          - choose:
-                            - conditions:
-                                - condition: template
-                                  value_template: '{{ alexa_volume_temp_enabled | bool }}'
-                              sequence:
-                                - service: media_player.volume_set
-                                  data:
-                                    entity_id: '{{ _player }}'
-                                    volume_level: '{{ alexa_volume_level | float(0.35) }}'
-                          - service: notify.alexa_media
-                            data:
-                              title: '{{ title_dry }}'
-                              message: '{{ msg_dry_alexa }}'
-                              target:
-                                - '{{ _player }}'
-                          - choose:
-                            - conditions:
-                                - condition: template
-                                  value_template: '{{ alexa_volume_temp_enabled | bool }}'
-                              sequence:
-                                - delay:
-                                    seconds: '{{ alexa_volume_restore_delay | int(10) }}'
-                                - service: media_player.volume_set
-                                  data:
-                                    entity_id: '{{ _player }}'
-                                    volume_level: '{{ _prev_vol }}'
-              - wait_for_trigger:
-                  - platform: template
-                    value_template: '{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}'
-                timeout:
-                  hours: 24
-                continue_on_timeout: true
-
-          # WIEDERHOLEN – nur Alexa
-          - conditions:
-              - condition: template
-                value_template: "{{ repeat_mode == 'repeat' }}"
+                value_template: >-
+                  {{ alexa_enabled_dry | bool and (alexa_targets_safe | count > 0) }}
             sequence:
               - repeat:
-                  while:
-                    - condition: template
-                      value_template: '{{ states(sensor) | float(999) < (thr | float(0)) }}'
                   sequence:
+                    - variables:
+                        a_moisture: "{{ states(sensor) }}"
+                        a_is_dry: "{{ (states(sensor) | float(999)) < (thr | float(0)) }}"
+                        a_paused: >-
+                          {% if pause_mode_enabled | bool
+                                and pause_mode_entity is not none
+                                and (pause_mode_entity | string) not in ['', 'None'] %}
+                            {{ is_state(pause_mode_entity, 'on') }}
+                          {% else %}
+                            false
+                          {% endif %}
+                        a_weekday: >-
+                          {% if not (weekday_filter_enabled | bool) %}
+                            true
+                          {% else %}
+                            {{ ['mon','tue','wed','thu','fri','sat','sun'][now().weekday()] in weekday_filter }}
+                          {% endif %}
+                        a_quiet: >-
+                          {% if not (alexa_quiet_enabled | bool) %}
+                            false
+                          {% else %}
+                            {% set s = today_at(alexa_quiet_start) %}
+                            {% set e = today_at(alexa_quiet_end) %}
+                            {% if e <= s %}{{ now() >= s or now() < e }}{% else %}{{ now() >= s and now() < e }}{% endif %}
+                          {% endif %}
+                        a_present: >-
+                          {% set ps = presence_entity if (presence_entity is iterable and presence_entity is not string)
+                                      else ([presence_entity] if presence_entity else []) %}
+                          {% if (ps | count) == 0 %}
+                            true
+                          {% else %}
+                            {% set zr = presence_zone if (presence_zone is iterable and presence_zone is not string)
+                                        else ([presence_zone] if presence_zone else []) %}
+                            {% set zs = zr if (zr | count) > 0 else ['zone.home'] %}
+                            {% set ns = namespace(found=false) %}
+                            {% for p in ps %}
+                              {% set pstate = states(p) %}
+                              {% for z in zs %}
+                                {% if pstate == z.split('.')[-1]
+                                      or pstate == (state_attr(z, 'friendly_name') | default('##none##', true)) %}
+                                  {% set ns.found = true %}
+                                {% endif %}
+                              {% endfor %}
+                            {% endfor %}
+                            {{ ns.found }}
+                          {% endif %}
+                        a_msg: >-
+                          {{ alexa_intro + ' ' if alexa_intro else '' }}{{ plant_name }} {{ alexa_message_dry }}
+                          Aktuell {{ a_moisture }} Prozent.
+
                     - choose:
                       - conditions:
                           - condition: template
-                            value_template: '{{ not (alexa_enabled_dry | bool) }}'
-                        sequence:
-                          - wait_for_trigger:
-                              - platform: template
-                                value_template: '{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}'
-                            timeout:
-                              hours: 12
-                            continue_on_timeout: true
-                    - choose:
-                      - conditions:
-                          - condition: template
-                            value_template: '{{ (alexa_enabled_dry | bool) and not (can_send_alexa_now | bool) }}'
-                        sequence:
-                          - wait_for_trigger:
-                              - platform: template
-                                value_template: '{{ can_send_alexa_now | bool }}'
-                              - platform: template
-                                value_template: '{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}'
-                            timeout:
-                              hours: 12
-                            continue_on_timeout: true
-                    - condition: template
-                      value_template: '{{ states(sensor) | float(999) < (thr | float(0)) }}'
-                    - condition: template
-                      value_template: '{{ weekday_allowed | bool }}'
-                    - choose:
-                      - conditions:
-                          - condition: template
-                            value_template: '{{ alexa_enabled_dry and (person_in_zone | bool) and not (in_quiet_alexa | bool) }}'
+                            value_template: >-
+                              {{ (a_is_dry | bool)
+                                 and not (a_quiet | bool)
+                                 and not (a_paused | bool)
+                                 and (a_present | bool)
+                                 and (a_weekday | bool) }}
                         sequence:
                           - repeat:
-                              for_each: '{{ alexa_targets_safe }}'
+                              for_each: "{{ alexa_targets_safe }}"
                               sequence:
                                 - variables:
-                                    _player: '{{ repeat.item }}'
-                                    _prev_vol: '{{ state_attr(_player, ''volume_level'') | float(0.3) }}'
+                                    _player: "{{ repeat.item }}"
+                                    _prev_vol: "{{ state_attr(repeat.item, 'volume_level') | float(0.3) }}"
                                 - choose:
                                   - conditions:
                                       - condition: template
-                                        value_template: '{{ alexa_volume_temp_enabled | bool }}'
+                                        value_template: "{{ alexa_volume_temp_enabled | bool }}"
                                     sequence:
                                       - service: media_player.volume_set
+                                        continue_on_error: true
+                                        target:
+                                          entity_id: "{{ _player }}"
                                         data:
-                                          entity_id: '{{ _player }}'
-                                          volume_level: '{{ alexa_volume_level | float(0.35) }}'
+                                          volume_level: "{{ alexa_volume_level | float(0.35) }}"
                                 - service: notify.alexa_media
+                                  continue_on_error: true
                                   data:
-                                    title: '{{ title_dry }}'
-                                    message: '{{ msg_dry_alexa }}'
+                                    title: "{{ title_dry }}"
+                                    message: "{{ a_msg }}"
                                     target:
-                                      - '{{ _player }}'
+                                      - "{{ _player }}"
                                 - choose:
                                   - conditions:
                                       - condition: template
-                                        value_template: '{{ alexa_volume_temp_enabled | bool }}'
+                                        value_template: "{{ alexa_volume_temp_enabled | bool }}"
                                     sequence:
                                       - delay:
-                                          seconds: '{{ alexa_volume_restore_delay | int(10) }}'
+                                          seconds: "{{ alexa_volume_restore_delay | int(10) }}"
                                       - service: media_player.volume_set
+                                        continue_on_error: true
+                                        target:
+                                          entity_id: "{{ _player }}"
                                         data:
-                                          entity_id: '{{ _player }}'
-                                          volume_level: '{{ _prev_vol }}'
+                                          volume_level: "{{ _prev_vol }}"
+
+                    # Warten bis zur nächsten Wiederholung – vorzeitig geweckt durch:
+                    # Feuchte OK · Button-Druck · Ruhezeit-Ende
                     - wait_for_trigger:
                         - platform: template
-                          value_template: "{{ (states(sensor) | float(0)) >= (thr_ok | float(0)) }}"
+                          id: sensor_ok
+                          value_template: "{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}"
+                        - platform: event
+                          id: user_action
+                          event_type: mobile_app_notification_action
+                          event_data:
+                            action: "dismiss_{{ notification_id }}"
+                        - platform: event
+                          id: user_action
+                          event_type: mobile_app_notification_action
+                          event_data:
+                            action: "snooze_{{ notification_id }}"
+                        - platform: time
+                          id: quiet_over
+                          at: "{{ alexa_quiet_end }}"
                       timeout:
-                        minutes: "{{ repeat_interval | int(30) }}"
+                        seconds: >-
+                          {{ 1 if repeat_mode != 'repeat' else (repeat_interval | int(30)) * 60 }}
                       continue_on_timeout: true
+
+                    # Button gedrückt → Ansagen für die Snooze-Dauer pausieren
+                    - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{ wait.trigger is not none and wait.trigger.id | default('') == 'user_action' }}
+                        sequence:
+                          - wait_for_trigger:
+                              - platform: template
+                                value_template: "{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}"
+                            timeout:
+                              minutes: "{{ snooze_duration | int(120) }}"
+                            continue_on_timeout: true
+                  until:
+                    - condition: template
+                      value_template: >-
+                        {{ repeat_mode != 'repeat'
+                           or (states(sensor) | float(999)) >= (thr | float(0))
+                           or (repeat.index | int(0)) >= 500 }}
 
     # ─── ENTWARNUNG (OK) ────────────────────────────────────────────────────────
     - conditions:
         - condition: trigger
           id: ok
         - condition: template
-          value_template: "{{ (states(sensor) | float(0)) >= (thr_ok | float(0)) }}"
-        - condition: template
-          value_template: '{{ ok_info_enabled }}'
+          value_template: "{{ ok_info_enabled | bool }}"
       sequence:
+        - variables:
+            o_is_ok: "{{ (states(sensor) | float(-1)) >= (thr_ok | float(0)) }}"
+            o_paused: >-
+              {% if pause_mode_enabled | bool
+                    and pause_mode_entity is not none
+                    and (pause_mode_entity | string) not in ['', 'None'] %}
+                {{ is_state(pause_mode_entity, 'on') }}
+              {% else %}
+                false
+              {% endif %}
+            o_present: >-
+              {% set ps = presence_entity if (presence_entity is iterable and presence_entity is not string)
+                          else ([presence_entity] if presence_entity else []) %}
+              {% if (ps | count) == 0 %}
+                true
+              {% else %}
+                {% set zr = presence_zone if (presence_zone is iterable and presence_zone is not string)
+                            else ([presence_zone] if presence_zone else []) %}
+                {% set zs = zr if (zr | count) > 0 else ['zone.home'] %}
+                {% set ns = namespace(found=false) %}
+                {% for p in ps %}
+                  {% set pstate = states(p) %}
+                  {% for z in zs %}
+                    {% if pstate == z.split('.')[-1]
+                          or pstate == (state_attr(z, 'friendly_name') | default('##none##', true)) %}
+                      {% set ns.found = true %}
+                    {% endif %}
+                  {% endfor %}
+                {% endfor %}
+                {{ ns.found }}
+              {% endif %}
+            o_quiet_alexa: >-
+              {% if not (alexa_quiet_enabled | bool) %}
+                false
+              {% else %}
+                {% set s = today_at(alexa_quiet_start) %}
+                {% set e = today_at(alexa_quiet_end) %}
+                {% if e <= s %}{{ now() >= s or now() < e }}{% else %}{{ now() >= s and now() < e }}{% endif %}
+              {% endif %}
+            o_quiet_mobile: >-
+              {% if not (mobile_quiet_enabled | bool) %}
+                false
+              {% else %}
+                {% set s = today_at(mobile_quiet_start) %}
+                {% set e = today_at(mobile_quiet_end) %}
+                {% if e <= s %}{{ now() >= s or now() < e }}{% else %}{{ now() >= s and now() < e }}{% endif %}
+              {% endif %}
+            o_quiet_persistent: >-
+              {% if not (persistent_quiet_enabled | bool) %}
+                false
+              {% else %}
+                {% set s = today_at(persistent_quiet_start) %}
+                {% set e = today_at(persistent_quiet_end) %}
+                {% if e <= s %}{{ now() >= s or now() < e }}{% else %}{{ now() >= s and now() < e }}{% endif %}
+              {% endif %}
+
+        - condition: template
+          value_template: "{{ o_is_ok | bool }}"
+
+        # Trocken-Benachrichtigung immer entfernen – auch im Pause-Modus
         - service: persistent_notification.dismiss
           data:
-            notification_id: '{{ notification_id }}'
+            notification_id: "{{ notification_id }}"
+
+        # Entwarnung nur senden, wenn nicht pausiert
         - choose:
           - conditions:
               - condition: template
-                value_template: '{{ alexa_enabled_ok and (person_in_zone | bool) and not (in_quiet_alexa | bool) }}'
+                value_template: "{{ not (o_paused | bool) }}"
             sequence:
-              - repeat:
-                  for_each: '{{ alexa_targets_safe }}'
+
+              # ── Alexa ──
+              - choose:
+                - conditions:
+                    - condition: template
+                      value_template: >-
+                        {{ alexa_enabled_ok | bool
+                           and (alexa_targets_safe | count > 0)
+                           and (o_present | bool) }}
                   sequence:
+                    - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ o_quiet_alexa | bool }}"
+                        sequence:
+                          - wait_for_trigger:
+                              - platform: time
+                                at: "{{ alexa_quiet_end }}"
+                            timeout:
+                              hours: 24
+                            continue_on_timeout: true
                     - variables:
-                        _player: '{{ repeat.item }}'
-                        _prev_vol: '{{ state_attr(_player, ''volume_level'') | float(0.3) }}'
+                        oa_quiet: >-
+                          {% if not (alexa_quiet_enabled | bool) %}
+                            false
+                          {% else %}
+                            {% set s = today_at(alexa_quiet_start) %}
+                            {% set e = today_at(alexa_quiet_end) %}
+                            {% if e <= s %}{{ now() >= s or now() < e }}{% else %}{{ now() >= s and now() < e }}{% endif %}
+                          {% endif %}
+                        oa_msg: >-
+                          {{ alexa_intro + ' ' if alexa_intro else '' }}{{ plant_name }}: {{ alexa_message_ok }}
+                          Aktuell {{ states(sensor) }} Prozent.
                     - choose:
                       - conditions:
                           - condition: template
-                            value_template: '{{ alexa_volume_temp_enabled | bool }}'
+                            value_template: >-
+                              {{ not (oa_quiet | bool)
+                                 and (states(sensor) | float(-1)) >= (thr_ok | float(0)) }}
                         sequence:
-                          - service: media_player.volume_set
-                            data:
-                              entity_id: '{{ _player }}'
-                              volume_level: '{{ alexa_volume_level | float(0.35) }}'
-                    - service: notify.alexa_media
-                      data:
-                        title: '{{ title_ok }}'
-                        message: '{{ msg_ok_alexa }}'
-                        target:
-                          - '{{ _player }}'
-                    - choose:
-                      - conditions:
-                          - condition: template
-                            value_template: '{{ alexa_volume_temp_enabled | bool }}'
-                        sequence:
-                          - delay:
-                              seconds: '{{ alexa_volume_restore_delay | int(10) }}'
-                          - service: media_player.volume_set
-                            data:
-                              entity_id: '{{ _player }}'
-                              volume_level: '{{ _prev_vol }}'
-          - conditions:
-              - condition: template
-                value_template: '{{ alexa_enabled_ok and (person_in_zone | bool) and (in_quiet_alexa | bool) }}'
-            sequence:
-              - wait_for_trigger:
-                  - platform: time
-                    at: "{{ alexa_quiet_end }}"
-                timeout:
-                  hours: 24
-                continue_on_timeout: true
-              - repeat:
-                  for_each: '{{ alexa_targets_safe }}'
+                          - repeat:
+                              for_each: "{{ alexa_targets_safe }}"
+                              sequence:
+                                - variables:
+                                    _player: "{{ repeat.item }}"
+                                    _prev_vol: "{{ state_attr(repeat.item, 'volume_level') | float(0.3) }}"
+                                - choose:
+                                  - conditions:
+                                      - condition: template
+                                        value_template: "{{ alexa_volume_temp_enabled | bool }}"
+                                    sequence:
+                                      - service: media_player.volume_set
+                                        continue_on_error: true
+                                        target:
+                                          entity_id: "{{ _player }}"
+                                        data:
+                                          volume_level: "{{ alexa_volume_level | float(0.35) }}"
+                                - service: notify.alexa_media
+                                  continue_on_error: true
+                                  data:
+                                    title: "{{ title_ok }}"
+                                    message: "{{ oa_msg }}"
+                                    target:
+                                      - "{{ _player }}"
+                                - choose:
+                                  - conditions:
+                                      - condition: template
+                                        value_template: "{{ alexa_volume_temp_enabled | bool }}"
+                                    sequence:
+                                      - delay:
+                                          seconds: "{{ alexa_volume_restore_delay | int(10) }}"
+                                      - service: media_player.volume_set
+                                        continue_on_error: true
+                                        target:
+                                          entity_id: "{{ _player }}"
+                                        data:
+                                          volume_level: "{{ _prev_vol }}"
+
+              # ── Mobile App ──
+              - choose:
+                - conditions:
+                    - condition: template
+                      value_template: >-
+                        {{ mobile_enabled_ok | bool and (mobile_notify_services | count > 0) }}
                   sequence:
+                    - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ o_quiet_mobile | bool }}"
+                        sequence:
+                          - wait_for_trigger:
+                              - platform: time
+                                at: "{{ mobile_quiet_end }}"
+                            timeout:
+                              hours: 24
+                            continue_on_timeout: true
                     - variables:
-                        _player: '{{ repeat.item }}'
-                        _prev_vol: '{{ state_attr(_player, ''volume_level'') | float(0.3) }}'
+                        om_quiet: >-
+                          {% if not (mobile_quiet_enabled | bool) %}
+                            false
+                          {% else %}
+                            {% set s = today_at(mobile_quiet_start) %}
+                            {% set e = today_at(mobile_quiet_end) %}
+                            {% if e <= s %}{{ now() >= s or now() < e }}{% else %}{{ now() >= s and now() < e }}{% endif %}
+                          {% endif %}
+                        om_msg: >-
+                          {{ plant_name }} {{ message_prefix_ok }}
+                          (Feuchte: {{ states(sensor) }} %, OK ab: {{ thr_ok }} %)
                     - choose:
                       - conditions:
                           - condition: template
-                            value_template: '{{ alexa_volume_temp_enabled | bool }}'
+                            value_template: >-
+                              {{ not (om_quiet | bool)
+                                 and (states(sensor) | float(-1)) >= (thr_ok | float(0)) }}
                         sequence:
-                          - service: media_player.volume_set
-                            data:
-                              entity_id: '{{ _player }}'
-                              volume_level: '{{ alexa_volume_level | float(0.35) }}'
-                    - service: notify.alexa_media
-                      data:
-                        title: '{{ title_ok }}'
-                        message: '{{ msg_ok_alexa }}'
-                        target:
-                          - '{{ _player }}'
+                          - repeat:
+                              for_each: "{{ mobile_notify_services }}"
+                              sequence:
+                                - service: "{{ repeat.item }}"
+                                  continue_on_error: true
+                                  data:
+                                    title: "{{ title_ok }}"
+                                    message: "{{ om_msg }}"
+                                    data:
+                                      tag: "{{ notification_id }}"
+
+              # ── HA-Benachrichtigung ──
+              - choose:
+                - conditions:
+                    - condition: template
+                      value_template: "{{ persistent_enabled_ok | bool }}"
+                  sequence:
                     - choose:
                       - conditions:
                           - condition: template
-                            value_template: '{{ alexa_volume_temp_enabled | bool }}'
+                            value_template: "{{ o_quiet_persistent | bool }}"
                         sequence:
-                          - delay:
-                              seconds: '{{ alexa_volume_restore_delay | int(10) }}'
-                          - service: media_player.volume_set
+                          - wait_for_trigger:
+                              - platform: time
+                                at: "{{ persistent_quiet_end }}"
+                            timeout:
+                              hours: 24
+                            continue_on_timeout: true
+                    - variables:
+                        op_quiet: >-
+                          {% if not (persistent_quiet_enabled | bool) %}
+                            false
+                          {% else %}
+                            {% set s = today_at(persistent_quiet_start) %}
+                            {% set e = today_at(persistent_quiet_end) %}
+                            {% if e <= s %}{{ now() >= s or now() < e }}{% else %}{{ now() >= s and now() < e }}{% endif %}
+                          {% endif %}
+                        op_msg: >-
+                          {{ plant_name }} {{ message_prefix_ok }}
+                          (Feuchte: {{ states(sensor) }} %, OK ab: {{ thr_ok }} %)
+                    - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{ not (op_quiet | bool)
+                                 and (states(sensor) | float(-1)) >= (thr_ok | float(0)) }}
+                        sequence:
+                          - service: persistent_notification.create
                             data:
-                              entity_id: '{{ _player }}'
-                              volume_level: '{{ _prev_vol }}'
-        - choose:
-          - conditions:
-              - condition: template
-                value_template: '{{ mobile_enabled_ok and (mobile_notify_services | length > 0) and not (in_quiet_mobile | bool) }}'
-            sequence:
-              - repeat:
-                  for_each: '{{ mobile_notify_services }}'
-                  sequence:
-                    - service: '{{ repeat.item }}'
-                      data:
-                        title: '{{ title_ok }}'
-                        message: '{{ msg_ok_common }}'
-                        data:
-                          tag: '{{ notification_id }}'
-          - conditions:
-              - condition: template
-                value_template: '{{ mobile_enabled_ok and (mobile_notify_services | length > 0) and (in_quiet_mobile | bool) }}'
-            sequence:
-              - wait_for_trigger:
-                  - platform: time
-                    at: "{{ mobile_quiet_end }}"
-                timeout:
-                  hours: 24
-                continue_on_timeout: true
-              - repeat:
-                  for_each: '{{ mobile_notify_services }}'
-                  sequence:
-                    - service: '{{ repeat.item }}'
-                      data:
-                        title: '{{ title_ok }}'
-                        message: '{{ msg_ok_common }}'
-                        data:
-                          tag: '{{ notification_id }}'
-        - choose:
-          - conditions:
-              - condition: template
-                value_template: '{{ persistent_enabled_ok and not (in_quiet_persistent | bool) }}'
-            sequence:
-              - service: persistent_notification.create
-                data:
-                  title: '{{ title_ok }}'
-                  message: '{{ msg_ok_common }}'
-                  notification_id: '{{ notification_id }}'
-          - conditions:
-              - condition: template
-                value_template: '{{ persistent_enabled_ok and (in_quiet_persistent | bool) }}'
-            sequence:
-              - wait_for_trigger:
-                  - platform: time
-                    at: "{{ persistent_quiet_end }}"
-                timeout:
-                  hours: 24
-                continue_on_timeout: true
-              - service: persistent_notification.create
-                data:
-                  title: '{{ title_ok }}'
-                  message: '{{ msg_ok_common }}'
-                  notification_id: '{{ notification_id }}'
+                              title: "{{ title_ok }}"
+                              message: "{{ op_msg }}"
+                              notification_id: "{{ notification_id }}"
 
     # ─── SENSORAUSFALL ──────────────────────────────────────────────────────────
+    # Kritischer Alarm: ignoriert bewusst Ruhezeiten und Wochentag-Filter.
     - conditions:
         - condition: trigger
           id: sensor_failure
         - condition: template
-          value_template: '{{ sensor_failure_enabled | bool }}'
-        - condition: template
-          value_template: '{{ not (is_paused | bool) }}'
+          value_template: "{{ sensor_failure_enabled | bool }}"
       sequence:
+        - variables:
+            f_paused: >-
+              {% if pause_mode_enabled | bool
+                    and pause_mode_entity is not none
+                    and (pause_mode_entity | string) not in ['', 'None'] %}
+                {{ is_state(pause_mode_entity, 'on') }}
+              {% else %}
+                false
+              {% endif %}
+            f_msg: "{{ plant_name }}: {{ sensor_failure_message }} (Sensor: {{ sensor_name }})"
+        - condition: template
+          value_template: "{{ not (f_paused | bool) }}"
         - choose:
           - conditions:
               - condition: template
-                value_template: '{{ persistent_enabled_dry }}'
+                value_template: "{{ persistent_enabled_dry | bool }}"
             sequence:
               - service: persistent_notification.create
                 data:
                   title: "🚨 Sensor-Ausfall"
-                  message: '{{ msg_sensor_failure }}'
-                  notification_id: '{{ notification_id }}_failure'
+                  message: "{{ f_msg }}"
+                  notification_id: "{{ notification_id }}_failure"
         - choose:
           - conditions:
               - condition: template
-                value_template: '{{ mobile_enabled_dry and (mobile_notify_services | length > 0) }}'
+                value_template: >-
+                  {{ mobile_enabled_dry | bool and (mobile_notify_services | count > 0) }}
             sequence:
               - repeat:
-                  for_each: '{{ mobile_notify_services }}'
+                  for_each: "{{ mobile_notify_services }}"
                   sequence:
-                    - service: '{{ repeat.item }}'
+                    - service: "{{ repeat.item }}"
+                      continue_on_error: true
                       data:
                         title: "🚨 Sensor-Ausfall"
-                        message: '{{ msg_sensor_failure }}'
+                        message: "{{ f_msg }}"
                         data:
-                          tag: '{{ notification_id }}_failure'
+                          tag: "{{ notification_id }}_failure"
         - choose:
           - conditions:
               - condition: template
-                value_template: '{{ alexa_enabled_dry and (person_in_zone | bool) and not (in_quiet_alexa | bool) }}'
+                value_template: >-
+                  {{ alexa_enabled_dry | bool and (alexa_targets_safe | count > 0) }}
             sequence:
               - repeat:
-                  for_each: '{{ alexa_targets_safe }}'
+                  for_each: "{{ alexa_targets_safe }}"
                   sequence:
                     - service: notify.alexa_media
+                      continue_on_error: true
                       data:
                         title: "Sensor-Ausfall"
-                        message: '{{ msg_sensor_failure }}'
+                        message: "{{ f_msg }}"
                         target:
-                          - '{{ repeat.item }}'
+                          - "{{ repeat.item }}"
 
     # ─── AKTIONS-BUTTON „Als gegossen markieren" ────────────────────────────────
     - conditions:
@@ -1608,126 +1933,371 @@ action:
       sequence:
         - service: persistent_notification.dismiss
           data:
-            notification_id: '{{ notification_id }}'
+            notification_id: "{{ notification_id }}"
         - choose:
           - conditions:
               - condition: template
-                value_template: '{{ mobile_enabled_dry and (mobile_notify_services | length > 0) }}'
+                value_template: "{{ mobile_notify_services | count > 0 }}"
             sequence:
               - repeat:
-                  for_each: '{{ mobile_notify_services }}'
+                  for_each: "{{ mobile_notify_services }}"
                   sequence:
-                    - service: '{{ repeat.item }}'
+                    - service: "{{ repeat.item }}"
+                      continue_on_error: true
                       data:
                         message: "clear_notification"
                         data:
-                          tag: '{{ notification_id }}'
+                          tag: "{{ notification_id }}"
 
-    # ─── AKTIONS-BUTTON „Später erinnern" (Snooze) ───────────────────────────────
+    # ─── AKTIONS-BUTTON „Später erinnern" (Snooze) ──────────────────────────────
     - conditions:
         - condition: trigger
           id: action_snooze
-        - condition: template
-          value_template: '{{ not (is_paused | bool) }}'
       sequence:
         # Benachrichtigung sofort schließen
         - choose:
           - conditions:
               - condition: template
-                value_template: '{{ mobile_enabled_dry and (mobile_notify_services | length > 0) }}'
+                value_template: "{{ mobile_notify_services | count > 0 }}"
             sequence:
               - repeat:
-                  for_each: '{{ mobile_notify_services }}'
+                  for_each: "{{ mobile_notify_services }}"
                   sequence:
-                    - service: '{{ repeat.item }}'
+                    - service: "{{ repeat.item }}"
+                      continue_on_error: true
                       data:
                         message: "clear_notification"
                         data:
-                          tag: '{{ notification_id }}'
-        # Snooze-Zeit warten – oder früher aufwachen wenn Pflanze gegossen wird
+                          tag: "{{ notification_id }}"
+
+        # Snooze-Zeit warten – oder früher aufwachen, wenn gegossen wurde
         - wait_for_trigger:
             - platform: template
               value_template: "{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}"
           timeout:
             minutes: "{{ snooze_duration | int(120) }}"
           continue_on_timeout: true
-        # Nur erneut erinnern wenn Pflanze noch trocken ist
+
+        # Live-Werte nach dem Warten neu einlesen
+        - variables:
+            s_is_dry: "{{ (states(sensor) | float(999)) < (thr | float(0)) }}"
+            s_paused: >-
+              {% if pause_mode_enabled | bool
+                    and pause_mode_entity is not none
+                    and (pause_mode_entity | string) not in ['', 'None'] %}
+                {{ is_state(pause_mode_entity, 'on') }}
+              {% else %}
+                false
+              {% endif %}
+            s_quiet_mobile: >-
+              {% if not (mobile_quiet_enabled | bool) %}
+                false
+              {% else %}
+                {% set s = today_at(mobile_quiet_start) %}
+                {% set e = today_at(mobile_quiet_end) %}
+                {% if e <= s %}{{ now() >= s or now() < e }}{% else %}{{ now() >= s and now() < e }}{% endif %}
+              {% endif %}
+            s_msg: >-
+              {{ plant_name }} {{ message_prefix_dry }}
+              (Feuchte: {{ states(sensor) }} %, Grenzwert: {{ thr }} %, OK ab: {{ thr_ok }} %)
+
         - condition: template
-          value_template: "{{ states(sensor) | float(999) < (thr | float(0)) }}"
-        - condition: template
-          value_template: '{{ not (is_paused | bool) }}'
-        # Erneut senden – mit beiden Buttons
-        - choose:
-          - conditions:
-              - condition: template
-                value_template: '{{ mobile_enabled_dry and (mobile_notify_services | length > 0) and not (in_quiet_mobile | bool) }}'
+          value_template: >-
+            {{ (s_is_dry | bool)
+               and not (s_paused | bool)
+               and not (s_quiet_mobile | bool)
+               and (mobile_enabled_dry | bool)
+               and (mobile_notify_services | count > 0) }}
+
+        - repeat:
+            for_each: "{{ mobile_notify_services }}"
             sequence:
-              - repeat:
-                  for_each: '{{ mobile_notify_services }}'
-                  sequence:
-                    - service: '{{ repeat.item }}'
-                      data:
-                        title: '{{ title_dry }}'
-                        message: '{{ msg_dry_common }}'
-                        data:
-                          actions:
-                            - action: "dismiss_{{ notification_id }}"
-                              title: "💧 Als gegossen markieren"
-                            - action: "snooze_{{ notification_id }}"
-                              title: "😴 Später erinnern"
-                          tag: '{{ notification_id }}'
+              - service: "{{ repeat.item }}"
+                continue_on_error: true
+                data:
+                  title: "{{ title_dry }}"
+                  message: "{{ s_msg }}"
+                  data:
+                    actions:
+                      - action: "dismiss_{{ notification_id }}"
+                        title: "💧 Als gegossen markieren"
+                      - action: "snooze_{{ notification_id }}"
+                        title: "😴 Später erinnern"
+                    tag: "{{ notification_id }}"
+
     # ─── PLANMÄSSIGES GIESSEN ───────────────────────────────────────────────────
     - conditions:
         - condition: trigger
           id: scheduled_water
         - condition: template
-          value_template: '{{ scheduled_water_enabled | bool }}'
-        - condition: template
-          value_template: >-
-            {{
-              auto_water_switch is not none
-              and auto_water_switch is not sameas false
-              and auto_water_switch | string | length > 0
-            }}
+          value_template: "{{ scheduled_water_enabled | bool and pump_valid | bool }}"
       sequence:
-        # Sensor-Check: nur gießen wenn Erde trocken genug
         - choose:
           - conditions:
               - condition: template
                 value_template: >-
-                  {{
-                    not (scheduled_water_use_sensor | bool)
-                    or states(sensor) | float(0) < (scheduled_water_threshold | float(60))
-                  }}
+                  {{ (not (scheduled_water_use_sensor | bool)
+                      or (states(sensor) | float(0)) < (scheduled_water_threshold | float(60)))
+                     and not is_state(auto_water_switch, 'on') }}
             sequence:
-              - service: switch.turn_on
+              - service: homeassistant.turn_on
                 target:
-                  entity_id: '{{ auto_water_switch }}'
-              # wait_for_trigger statt delay: Pumpe stoppt sofort wenn Sensor steigt
-              # Schützt auch vor mode:restart – turn_off kommt direkt danach
+                  entity_id: "{{ auto_water_switch }}"
+              # Stoppt vorzeitig beim ZEITPLAN-Schwellenwert (nicht beim Alarm-OK-Wert).
+              # Ohne Sensor-Check ist das Template konstant false → volle Laufzeit.
               - wait_for_trigger:
                   - platform: template
-                    value_template: "{{ states(sensor) | float(0) >= (thr_ok | float(0)) }}"
+                    value_template: >-
+                      {{ (scheduled_water_use_sensor | bool)
+                         and (states(sensor) | float(0)) >= (scheduled_water_threshold | float(60)) }}
                 timeout:
                   seconds: "{{ scheduled_water_duration | int(20) }}"
                 continue_on_timeout: true
-              - service: switch.turn_off
+              - service: homeassistant.turn_off
                 target:
-                  entity_id: '{{ auto_water_switch }}'
-              # Optional: Alexa-Bestätigung dass gegossen wurde
+                  entity_id: "{{ auto_water_switch }}"
+
+              # Optionale Alexa-Bestätigung
+              - variables:
+                  w_paused: >-
+                    {% if pause_mode_enabled | bool
+                          and pause_mode_entity is not none
+                          and (pause_mode_entity | string) not in ['', 'None'] %}
+                      {{ is_state(pause_mode_entity, 'on') }}
+                    {% else %}
+                      false
+                    {% endif %}
+                  w_quiet: >-
+                    {% if not (alexa_quiet_enabled | bool) %}
+                      false
+                    {% else %}
+                      {% set s = today_at(alexa_quiet_start) %}
+                      {% set e = today_at(alexa_quiet_end) %}
+                      {% if e <= s %}{{ now() >= s or now() < e }}{% else %}{{ now() >= s and now() < e }}{% endif %}
+                    {% endif %}
+                  w_present: >-
+                    {% set ps = presence_entity if (presence_entity is iterable and presence_entity is not string)
+                                else ([presence_entity] if presence_entity else []) %}
+                    {% if (ps | count) == 0 %}
+                      true
+                    {% else %}
+                      {% set zr = presence_zone if (presence_zone is iterable and presence_zone is not string)
+                                  else ([presence_zone] if presence_zone else []) %}
+                      {% set zs = zr if (zr | count) > 0 else ['zone.home'] %}
+                      {% set ns = namespace(found=false) %}
+                      {% for p in ps %}
+                        {% set pstate = states(p) %}
+                        {% for z in zs %}
+                          {% if pstate == z.split('.')[-1]
+                                or pstate == (state_attr(z, 'friendly_name') | default('##none##', true)) %}
+                            {% set ns.found = true %}
+                          {% endif %}
+                        {% endfor %}
+                      {% endfor %}
+                      {{ ns.found }}
+                    {% endif %}
               - choose:
                 - conditions:
                     - condition: template
-                      value_template: '{{ alexa_enabled_dry and (person_in_zone | bool) and not (in_quiet_alexa | bool) and not (is_paused | bool) }}'
+                      value_template: >-
+                        {{ alexa_enabled_dry | bool
+                           and (alexa_targets_safe | count > 0)
+                           and not (w_quiet | bool)
+                           and not (w_paused | bool)
+                           and (w_present | bool) }}
                   sequence:
                     - repeat:
-                        for_each: '{{ alexa_targets_safe }}'
+                        for_each: "{{ alexa_targets_safe }}"
                         sequence:
                           - service: notify.alexa_media
+                            continue_on_error: true
                             data:
                               message: >-
-                                {{ alexa_intro + ' ' if alexa_intro else '' }}
-                                {{ plant_name }} wurde planmäßig bewässert.
-                                Aktuell {{ states(sensor) | float(0) }} Prozent Feuchte.
+                                {{ alexa_intro + ' ' if alexa_intro else '' }}{{ plant_name }}
+                                wurde planmäßig bewässert.
+                                Aktuell {{ states(sensor) }} Prozent Feuchte.
                               target:
-                                - '{{ repeat.item }}'
+                                - "{{ repeat.item }}"
+
+    # ─── NACHHOLUNG AM RUHEZEIT-ENDE – Mobile App ───────────────────────────────
+    # Ersetzt den früheren Warteblock im Ablauf: läuft als eigener Trigger und
+    # übersteht daher auch einen HA-Neustart.
+    - conditions:
+        - condition: trigger
+          id: quiet_end_mobile
+        - condition: template
+          value_template: >-
+            {{ mobile_quiet_enabled | bool
+               and mobile_enabled_dry | bool
+               and (mobile_notify_services | count > 0) }}
+      sequence:
+        - variables:
+            q_is_dry: "{{ (states(sensor) | float(999)) < (thr | float(0)) }}"
+            q_paused: >-
+              {% if pause_mode_enabled | bool
+                    and pause_mode_entity is not none
+                    and (pause_mode_entity | string) not in ['', 'None'] %}
+                {{ is_state(pause_mode_entity, 'on') }}
+              {% else %}
+                false
+              {% endif %}
+            q_weekday: >-
+              {% if not (weekday_filter_enabled | bool) %}
+                true
+              {% else %}
+                {{ ['mon','tue','wed','thu','fri','sat','sun'][now().weekday()] in weekday_filter }}
+              {% endif %}
+            q_msg: >-
+              {{ plant_name }} {{ message_prefix_dry }}
+              (Feuchte: {{ states(sensor) }} %, Grenzwert: {{ thr }} %, OK ab: {{ thr_ok }} %)
+        - condition: template
+          value_template: >-
+            {{ (q_is_dry | bool) and not (q_paused | bool) and (q_weekday | bool) }}
+        - repeat:
+            for_each: "{{ mobile_notify_services }}"
+            sequence:
+              - service: "{{ repeat.item }}"
+                continue_on_error: true
+                data:
+                  title: "{{ title_dry }}"
+                  message: "{{ q_msg }}"
+                  data:
+                    actions:
+                      - action: "dismiss_{{ notification_id }}"
+                        title: "💧 Als gegossen markieren"
+                      - action: "snooze_{{ notification_id }}"
+                        title: "😴 Später erinnern"
+                    tag: "{{ notification_id }}"
+
+    # ─── NACHHOLUNG AM RUHEZEIT-ENDE – HA-Benachrichtigung ──────────────────────
+    - conditions:
+        - condition: trigger
+          id: quiet_end_persistent
+        - condition: template
+          value_template: >-
+            {{ persistent_quiet_enabled | bool and persistent_enabled_dry | bool }}
+      sequence:
+        - variables:
+            q_is_dry: "{{ (states(sensor) | float(999)) < (thr | float(0)) }}"
+            q_paused: >-
+              {% if pause_mode_enabled | bool
+                    and pause_mode_entity is not none
+                    and (pause_mode_entity | string) not in ['', 'None'] %}
+                {{ is_state(pause_mode_entity, 'on') }}
+              {% else %}
+                false
+              {% endif %}
+            q_weekday: >-
+              {% if not (weekday_filter_enabled | bool) %}
+                true
+              {% else %}
+                {{ ['mon','tue','wed','thu','fri','sat','sun'][now().weekday()] in weekday_filter }}
+              {% endif %}
+            q_msg: >-
+              {{ plant_name }} {{ message_prefix_dry }}
+              (Feuchte: {{ states(sensor) }} %, Grenzwert: {{ thr }} %, OK ab: {{ thr_ok }} %)
+        - condition: template
+          value_template: >-
+            {{ (q_is_dry | bool) and not (q_paused | bool) and (q_weekday | bool) }}
+        - service: persistent_notification.create
+          data:
+            title: "{{ title_dry }}"
+            message: "{{ q_msg }}"
+            notification_id: "{{ notification_id }}"
+
+    # ─── NACHHOLUNG AM RUHEZEIT-ENDE – Alexa ────────────────────────────────────
+    # Nur im Einmal-Modus nötig: im Wiederhol-Modus wacht die Schleife selbst
+    # zum Ruhezeit-Ende auf und sagt dann an.
+    - conditions:
+        - condition: trigger
+          id: quiet_end_alexa
+        - condition: template
+          value_template: >-
+            {{ alexa_quiet_enabled | bool
+               and alexa_enabled_dry | bool
+               and repeat_mode != 'repeat'
+               and (alexa_targets_safe | count > 0) }}
+      sequence:
+        - variables:
+            q_is_dry: "{{ (states(sensor) | float(999)) < (thr | float(0)) }}"
+            q_paused: >-
+              {% if pause_mode_enabled | bool
+                    and pause_mode_entity is not none
+                    and (pause_mode_entity | string) not in ['', 'None'] %}
+                {{ is_state(pause_mode_entity, 'on') }}
+              {% else %}
+                false
+              {% endif %}
+            q_weekday: >-
+              {% if not (weekday_filter_enabled | bool) %}
+                true
+              {% else %}
+                {{ ['mon','tue','wed','thu','fri','sat','sun'][now().weekday()] in weekday_filter }}
+              {% endif %}
+            q_present: >-
+              {% set ps = presence_entity if (presence_entity is iterable and presence_entity is not string)
+                          else ([presence_entity] if presence_entity else []) %}
+              {% if (ps | count) == 0 %}
+                true
+              {% else %}
+                {% set zr = presence_zone if (presence_zone is iterable and presence_zone is not string)
+                            else ([presence_zone] if presence_zone else []) %}
+                {% set zs = zr if (zr | count) > 0 else ['zone.home'] %}
+                {% set ns = namespace(found=false) %}
+                {% for p in ps %}
+                  {% set pstate = states(p) %}
+                  {% for z in zs %}
+                    {% if pstate == z.split('.')[-1]
+                          or pstate == (state_attr(z, 'friendly_name') | default('##none##', true)) %}
+                      {% set ns.found = true %}
+                    {% endif %}
+                  {% endfor %}
+                {% endfor %}
+                {{ ns.found }}
+              {% endif %}
+            q_msg: >-
+              {{ alexa_intro + ' ' if alexa_intro else '' }}{{ plant_name }} {{ alexa_message_dry }}
+              Aktuell {{ states(sensor) }} Prozent.
+        - condition: template
+          value_template: >-
+            {{ (q_is_dry | bool)
+               and not (q_paused | bool)
+               and (q_weekday | bool)
+               and (q_present | bool) }}
+        - repeat:
+            for_each: "{{ alexa_targets_safe }}"
+            sequence:
+              - variables:
+                  _player: "{{ repeat.item }}"
+                  _prev_vol: "{{ state_attr(repeat.item, 'volume_level') | float(0.3) }}"
+              - choose:
+                - conditions:
+                    - condition: template
+                      value_template: "{{ alexa_volume_temp_enabled | bool }}"
+                  sequence:
+                    - service: media_player.volume_set
+                      continue_on_error: true
+                      target:
+                        entity_id: "{{ _player }}"
+                      data:
+                        volume_level: "{{ alexa_volume_level | float(0.35) }}"
+              - service: notify.alexa_media
+                continue_on_error: true
+                data:
+                  title: "{{ title_dry }}"
+                  message: "{{ q_msg }}"
+                  target:
+                    - "{{ _player }}"
+              - choose:
+                - conditions:
+                    - condition: template
+                      value_template: "{{ alexa_volume_temp_enabled | bool }}"
+                  sequence:
+                    - delay:
+                        seconds: "{{ alexa_volume_restore_delay | int(10) }}"
+                    - service: media_player.volume_set
+                      continue_on_error: true
+                      target:
+                        entity_id: "{{ _player }}"
+                      data:
+                        volume_level: "{{ _prev_vol }}"
